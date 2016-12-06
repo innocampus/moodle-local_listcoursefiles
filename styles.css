@@ -1,0 +1,11 @@
+.local_listcoursefiles_menu {
+    width: 100%;
+}
+
+.local_listcoursefiles_menu .local_listcoursefiles_selection {
+    display: inline-table;
+}
+
+.local_listcoursefiles_description {
+    margin: 8px 0;
+}
