@@ -29,7 +29,8 @@ function local_listcoursefiles_extend_settings_navigation(settings_navigation $n
         if (has_capability('local/listcoursefiles:view', $context) && $course = $nav->get('courseadmin')) {
             $url = new moodle_url('/local/listcoursefiles/index.php',
                     array('courseid' => $context->get_course_context()->instanceid));
-            $course->add(get_string('linkname', 'local_listcoursefiles'), $url);
+            $course->add(get_string('linkname', 'local_listcoursefiles'), $url, navigation_node::TYPE_CUSTOM,
+                    null, null, new pix_icon('i/report', ''));
         }
     }
 }

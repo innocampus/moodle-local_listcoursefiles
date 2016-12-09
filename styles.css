@@ -4,8 +4,17 @@
 
 .local_listcoursefiles_menu .local_listcoursefiles_selection {
     display: inline-table;
+    margin: 0 5px;
 }
 
 .local_listcoursefiles_description {
     margin: 8px 0;
+}
+
+.uncheck_all {
+    margin-left: 4px;
+}
+
+.files_actions {
+    margin-top: 10px;
 }

@@ -191,10 +191,6 @@ class Course_files {
             return $this->components;
         }
 
-        $this->components = array();
-        $this->components['all'] = get_string('all_files', 'local_listcoursefiles');
-        $this->components['all_wo_submissions'] = get_string('all_wo_submissions', 'local_listcoursefiles');
-
         $sql = 'SELECT f.component
                 FROM {files} f
                 LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -205,11 +201,17 @@ class Course_files {
         $params = array('path' => $this->context->path . '/%', 'cid' => $this->context->id);
         $ret = $DB->get_fieldset_sql($sql, $params);
 
+        $this->components = array();
         foreach ($ret as $r) {
             $this->components[$r] = get_component_translation($r);
         }
 
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
+        $componentsall = array(
+            'all' => get_string('all_files', 'local_listcoursefiles'),
+            'all_wo_submissions' => get_string('all_wo_submissions', 'local_listcoursefiles'),
+        );
+        $this->components = $componentsall + $this->components;
 
         return $this->components;
     }
