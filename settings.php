@@ -15,20 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version info
- *
- * This File contains information about the current version of local/listcoursefiles
+ * Administration settings definitions for local listcoursefiles.
  *
  * @package    local_listcoursefiles
  * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2016120901;
-$plugin->requires  = 2016051900;
-$plugin->cron      = 0;
-$plugin->component = "local_listcoursefiles";
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "1.1";
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/local/listcoursefiles/lib.php');
+
+if ($hassiteconfig) {
+    $settings = new admin_settingpage('local_listcoursefiles',
+            get_string('pluginname', 'local_listcoursefiles'), 'moodle/site:config');
+    $settings->add(new admin_setting_configtextarea('local_listcoursefiles/licensecolors',
+            get_string('license_colors', 'local_listcoursefiles'),
+            get_string('license_colors_desc', 'local_listcoursefiles'),
+            ''));
+
+    $ADMIN->add('localplugins', $settings);
+}
+

@@ -100,6 +100,7 @@ if (count($filelist) > 0) {
     $licenses = $files->get_available_licenses();
     foreach ($filelist as $f) {
         $license = (isset($licenses[$f->license])) ? $licenses[$f->license] : '';
+        $license = $files->get_license_name_color($f->license);
         $checkbox = '<input type="checkbox" class="filecheckbox" name="file[' . $f->id . ']" />';
 
         $fileurl = $files->get_file_download_url($f);

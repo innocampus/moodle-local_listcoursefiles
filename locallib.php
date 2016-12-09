@@ -50,6 +50,7 @@ class Course_files {
      */
     protected $filelist = null;
     protected $licenses = null;
+    protected $licenscolors = null;
 
     /**
      * @var string
@@ -228,6 +229,31 @@ class Course_files {
         }
 
         return $this->licenses;
+    }
+
+    /**
+     *
+     * @param string short name of a license
+     * @return full name of the license with HTML
+     */
+    public function get_license_name_color($licenseshort) {
+        $licenses = $this->get_available_licenses();
+
+        if ($this->licenscolors === null) {
+            $colorscfg = get_config('local_listcoursefiles', 'licensecolors');
+            $matches = array();
+            preg_match_all('@\s*(\S+)\s*([a-fA-F0-9]{6})\s*@', $colorscfg, $matches, PREG_SET_ORDER);
+            $this->licenscolors = array();
+            foreach ($matches as $m) {
+                $this->licenscolors[$m[1]] = $m[2];
+            }
+        }
+
+        $name = (isset($licenses[$licenseshort])) ? $licenses[$licenseshort] : '';
+        if (isset($this->licenscolors[$licenseshort])) {
+            $name = html_writer::tag('span', $name, array('style' => 'color: #' . $this->licenscolors[$licenseshort]));
+        }
+        return $name;
     }
 
     /**
