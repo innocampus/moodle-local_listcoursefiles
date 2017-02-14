@@ -60,91 +60,41 @@ if ($action === 'change_license' && $changelicenseallowed) {
 }
 
 $filelist = $files->get_file_list($page * $limit, $limit);
+$licenses = $files->get_available_licenses();
 
-echo $OUTPUT->header();
+$tpldata = new stdClass();
+$tpldata->course_selection_html = print_course_selection($url, $courseid);
+$tpldata->component_selection_html = print_component_selection($url, $files->get_components(), $component);
+$tpldata->file_type_selection_html = print_file_type_selection($url, $filetype);
+$tpldata->paging_bar_html = $OUTPUT->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
+$tpldata->url = $url;
+$tpldata->sesskey = sesskey();
+$tpldata->files = array();
+$tpldata->files_exist = count($filelist) > 0;
+$tpldata->change_license_allowed = $changelicenseallowed;
+$tpldata->license_select_html = html_writer::select($licenses, 'license');
 
-echo '<div class="local_listcoursefiles_menu">';
-echo '<div class="local_listcoursefiles_selection">' . get_string('mycourses') . ':';
-echo print_course_selection($url, $courseid) . '</div>';
-echo '<div class="local_listcoursefiles_selection">' . get_string('filter_components', 'local_listcoursefiles') . ':';
-echo print_component_selection($url, $files->get_components(), $component) . '</div>';
-echo '<div class="local_listcoursefiles_selection">' . get_string('filter_filetype', 'local_listcoursefiles') . ':';
-echo print_file_type_selection($url, $filetype) . '</div>';
-echo '</div>';
+foreach ($filelist as $file) {
+    $tplfile = new stdClass();
 
-echo '<div class="local_listcoursefiles_description">';
-echo get_string('description', 'local_listcoursefiles');
-echo '</div>';
+    $license = (isset($licenses[$file->license])) ? $licenses[$file->license] : '';
+    $tplfile->file_license = $files->get_license_name_color($file->license);
+    $tplfile->file_id = $file->id;
+    $tplfile->file_size = display_size($file->filesize);
+    $tplfile->file_type = Course_files::get_file_type_translation($file->mimetype);
+    $tplfile->file_uploader = fullname($file);
 
-if (count($filelist) > 0) {
-    echo $OUTPUT->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
-    echo '<a href="javascript:void(0);" class="check_uncheck_all">' .
-        get_string('check_uncheck_all', 'local_listcoursefiles') . '</a>';
-    echo '<form action="' . $url . '" method="post" id="filelist">';
-    echo '<input name="sesskey" type="hidden" value="' . sesskey() . '" />';
+    $fileurl = $files->get_file_download_url($file);
+    $tplfile->file_url = ($fileurl) ? $fileurl->out() : false;
+    $tplfile->file_name = $file->filename;
 
-    $table = new html_table();
-    $table->head = array();
-    $table->head[] = '';
-    $table->head[] = get_string('filename', 'local_listcoursefiles');
-    $table->head[] = get_string('filesize', 'local_listcoursefiles');
-    $table->head[] = get_string('component', 'local_listcoursefiles');
-    $table->head[] = get_string('mimetype', 'local_listcoursefiles');
-    $table->head[] = get_string('license', 'local_listcoursefiles');
-    $table->head[] = get_string('uploader', 'local_listcoursefiles');
+    $componenturl = $files->get_component_url($file->contextlevel, $file->instanceid);
+    $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
+    $tplfile->file_component = get_component_translation($file->component);
 
-    $table->align = array('left');
-    $table->attributes = array('align' => 'center');
-    $table->data = array();
-
-    $licenses = $files->get_available_licenses();
-    foreach ($filelist as $f) {
-        $license = (isset($licenses[$f->license])) ? $licenses[$f->license] : '';
-        $license = $files->get_license_name_color($f->license);
-        $checkbox = '<input type="checkbox" class="filecheckbox" name="file[' . $f->id . ']" />';
-
-        $fileurl = $files->get_file_download_url($f);
-        $filenameurl = $f->filename;
-        if (!is_null($fileurl)) {
-            $filenameurl = '<a href="' . $fileurl->out() . '">' . $f->filename . '</a>';
-        }
-
-        $componenturl = $files->get_component_url($f->contextlevel, $f->instanceid);
-        $componentnameurl = get_component_translation($f->component);
-        if (!is_null($componenturl)) {
-            $componentnameurl = '<a href="' . $componenturl->out() . '">' . $componentnameurl . '</a>';
-        }
-
-        $table->data[] = array(
-            $checkbox, $filenameurl, display_size($f->filesize), $componentnameurl,
-            Course_files::get_file_type_translation($f->mimetype), $license, fullname($f)
-        );
-    }
-
-    echo html_writer::table($table);
-    echo $OUTPUT->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
-    echo '<div class="files_actions">';
-    if ($changelicenseallowed) {
-        echo html_writer::select($licenses, 'license');
-        echo '<button type="submit" name="action" value="change_license">';
-        echo get_string('change_license', 'local_listcoursefiles');
-        echo '</button>';
-    }
-    echo '</div>';
-    echo '</form>';
-} else {
-    echo '<b>' . get_string('nothingfound', 'local_listcoursefiles') . '</b>';
+    $tpldata->files[] = $tplfile;
 }
 
-// Checkbox that toggles all other checkboxes.
-$PAGE->requires->js_amd_inline("
-require(['jquery'], function($) {
-    var nextstatus = true;
-    $('.check_uncheck_all').click(function () {
-        $('input:checkbox').prop('checked', nextstatus);
-        nextstatus = !nextstatus;
-    });
-});
-");
-
+echo $OUTPUT->header();
+echo $OUTPUT->render_from_template('local_listcoursefiles/view', $tpldata);
 echo $OUTPUT->footer();

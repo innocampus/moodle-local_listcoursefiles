@@ -1,0 +1,109 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="local_listcoursefiles_menu">
+    <div class="local_listcoursefiles_selection">
+        {{#str}}mycourses{{/str}}: {{{course_selection_html}}}
+    </div>
+    <div class="local_listcoursefiles_selection">
+        {{#str}}filter_components,local_listcoursefiles{{/str}}: {{{component_selection_html}}}
+    </div>
+    <div class="local_listcoursefiles_selection">
+        {{#str}}filter_filetype,local_listcoursefiles{{/str}}: {{{file_type_selection_html}}}
+    </div>
+</div>
+
+<div class="local_listcoursefiles_description">
+    {{#str}}description,local_listcoursefiles{{/str}}
+</div>
+
+{{#files_exist}}
+    {{{paging_bar_html}}}
+
+    <a href="javascript:void(0);" class="check_uncheck_all">{{#str}}check_uncheck_all,local_listcoursefiles{{/str}}</a>
+    <form action="{{{url}}}" method="post" id="filelist">
+    <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
+
+    <table align="center" class="generaltable">
+        <thead>
+            <tr>
+                <th class="header c0" scope="col"></th>
+                <th class="header c1" scope="col">{{#str}}filename,local_listcoursefiles{{/str}}</th>
+                <th class="header c2" scope="col">{{#str}}filesize,local_listcoursefiles{{/str}}</th>
+                <th class="header c3" scope="col">{{#str}}component,local_listcoursefiles{{/str}}</th>
+                <th class="header c4" scope="col">{{#str}}mimetype,local_listcoursefiles{{/str}}</th>
+                <th class="header c5" scope="col">{{#str}}license,local_listcoursefiles{{/str}}</th>
+                <th class="header c6 lastcol" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{#files}}
+            <tr>
+                <td class="cell c0" style="text-align:left;">
+                    <input type="checkbox" class="filecheckbox" name="file[{{file_id}}]" />
+                </td>
+                <td class="cell c1">
+                    {{#file_url}}
+                        <a href="{{{file_url}}}">{{file_name}}</a>
+                    {{/file_url}}
+                    {{^file_url}}
+                        {{file_name}}
+                    {{/file_url}}
+                </td>
+                <td class="cell c2">{{file_size}}</td>
+                <td class="cell c3">
+                    {{#file_component_url}}
+                        <a href="{{{file_component_url}}}">{{file_component}}</a>
+                    {{/file_component_url}}
+                    {{^file_component_url}}
+                        {{file_component}}
+                    {{/file_component_url}}
+                </td>
+                <td class="cell c4">{{file_type}}</td>
+                <td class="cell c5">{{file_license}}</td>
+                <td class="cell c6 lastcol">{{file_uploader}}</td>
+            </tr>
+        {{/files}}
+    </table>
+
+    {{{paging_bar_html}}}
+
+    <div class="files_actions">
+        {{#change_license_allowed}}
+            {{{license_select_html}}}
+            <button type="submit" name="action" value="change_license">
+                {{#str}}change_license,local_listcoursefiles{{/str}}
+            </button>
+        {{/change_license_allowed}}
+    </div>
+
+    </form>
+
+{{/files_exist}}
+{{^files_exist}}
+    <b>{{#str}}nothingfound,local_listcoursefiles{{/str}}</b>
+{{/files_exist}}
+
+
+{{#js}}
+    require(['jquery'], function($) {
+    var nextstatus = true;
+    $('.check_uncheck_all').click(function () {
+        $('input:checkbox').prop('checked', nextstatus);
+        nextstatus = !nextstatus;
+    });
+});
+{{/js}}
