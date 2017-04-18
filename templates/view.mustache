@@ -33,7 +33,7 @@
 {{#files_exist}}
     {{{paging_bar_html}}}
 
-    <a href="javascript:void(0);" class="check_uncheck_all">{{#str}}check_uncheck_all,local_listcoursefiles{{/str}}</a>
+    <a href="javascript:void(0);" class="local_listcoursefiles_check_uncheck_all">{{#str}}check_uncheck_all,local_listcoursefiles{{/str}}</a>
     <form action="{{{url}}}" method="post" id="filelist">
     <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
 
@@ -73,7 +73,7 @@
                     {{/file_component_url}}
                 </td>
                 <td class="cell c4">{{file_type}}</td>
-                <td class="cell c5">{{file_license}}</td>
+                <td class="cell c5">{{{file_license}}}</td>
                 <td class="cell c6 lastcol">{{file_uploader}}</td>
             </tr>
         {{/files}}
@@ -111,7 +111,7 @@
 {{#js}}
     require(['jquery'], function($) {
     var nextstatus = true;
-    $('.check_uncheck_all').click(function () {
+    $('.local_listcoursefiles_check_uncheck_all').click(function () {
         $('input:checkbox').prop('checked', nextstatus);
         nextstatus = !nextstatus;
     });

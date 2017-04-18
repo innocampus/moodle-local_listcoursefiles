@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * List all files in a course.
+ *
+ * @package    local_listcoursefiles
+ * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once('locallib.php');
 
@@ -23,8 +31,8 @@ $limit = optional_param('limit', 200, PARAM_INT);
 if ($page < 0) {
     $page = 0;
 }
-if ($limit < 1 || $limit > LISTCOURSEFILES_MAX_FILES) {
-    $limit = LISTCOURSEFILES_MAX_FILES;
+if ($limit < 1 || $limit > LOCAL_LISTCOURSEFILES_MAX_FILES) {
+    $limit = LOCAL_LISTCOURSEFILES_MAX_FILES;
 }
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHAEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
@@ -49,7 +57,7 @@ $changelicenseallowed = has_capability('local/listcoursefiles:change_license', $
 $downloadallowed = has_capability('local/listcoursefiles:download', $context);
 
 
-$files = new Course_files($courseid, $context, $component, $filetype);
+$files = new local_listcoursefiles\course_files($courseid, $context, $component, $filetype);
 
 if ($action === 'change_license' && $changelicenseallowed) {
     require_sesskey();
@@ -69,12 +77,12 @@ if ($action === 'change_license' && $changelicenseallowed) {
 }
 
 $filelist = $files->get_file_list($page * $limit, $limit);
-$licenses = $files->get_available_licenses();
+$licenses = local_listcoursefiles\course_files::get_available_licenses();
 
 $tpldata = new stdClass();
-$tpldata->course_selection_html = print_course_selection($url, $courseid);
-$tpldata->component_selection_html = print_component_selection($url, $files->get_components(), $component);
-$tpldata->file_type_selection_html = print_file_type_selection($url, $filetype);
+$tpldata->course_selection_html = local_listcoursefiles_get_course_selection($url, $courseid);
+$tpldata->component_selection_html = local_listcoursefiles_get_component_selection($url, $files->get_components(), $component);
+$tpldata->file_type_selection_html = local_listcoursefiles_get_file_type_selection($url, $filetype);
 $tpldata->paging_bar_html = $OUTPUT->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
 $tpldata->url = $url;
 $tpldata->sesskey = sesskey();
@@ -87,11 +95,10 @@ $tpldata->license_select_html = html_writer::select($licenses, 'license');
 foreach ($filelist as $file) {
     $tplfile = new stdClass();
 
-    $license = (isset($licenses[$file->license])) ? $licenses[$file->license] : '';
-    $tplfile->file_license = $files->get_license_name_color($file->license);
+    $tplfile->file_license = local_listcoursefiles\course_files::get_license_name_color($file->license);
     $tplfile->file_id = $file->id;
     $tplfile->file_size = display_size($file->filesize);
-    $tplfile->file_type = Course_files::get_file_type_translation($file->mimetype);
+    $tplfile->file_type = local_listcoursefiles\course_files::get_file_type_translation($file->mimetype);
     $tplfile->file_uploader = fullname($file);
 
     $fileurl = $files->get_file_download_url($file);
@@ -100,7 +107,7 @@ foreach ($filelist as $file) {
 
     $componenturl = $files->get_component_url($file->contextlevel, $file->instanceid);
     $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
-    $tplfile->file_component = get_component_translation($file->component);
+    $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
 
     $tpldata->files[] = $tplfile;
 }
