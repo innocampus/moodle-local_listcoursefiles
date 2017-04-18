@@ -286,17 +286,7 @@ class Course_files {
                 WHERE f.id ' . $sqlin;
         $res = $DB->get_records_sql($sql, $paramfids);
 
-        $thiscontextpath = $this->context->path;
-        $thiscontextpathlen = strlen($this->context->path);
-        $thiscontextid = $this->context->id;
-        $checkedfileids = array();
-        foreach ($res as $f) {
-            if ($f->contextid == $thiscontextid ||
-                substr($f->path, 0, $thiscontextpathlen) === $thiscontextpath) {
-
-                $checkedfileids[] = $f->id;
-            }
-        }
+        $checkedfileids = $this->check_files_context($res, true);
 
         list($sqlin, $paramfids) = $DB->get_in_or_equal($checkedfileids, SQL_PARAMS_QM);
         $transaction = $DB->start_delegated_transaction();
@@ -314,6 +304,102 @@ class Course_files {
             $event->trigger();
         }
         $transaction->allow_commit();
+    }
+
+    /**
+     * Check given files whether they belong to the context.
+     *
+     * The file objects need to have the contextid and the context path.
+     *
+     * @param stdClass files as retrieved from the files and context table
+     * @return file ids that belong to the context
+     */
+    protected function check_files_context(&$files, $returnfileids = false) {
+        $thiscontextpath = $this->context->path;
+        $thiscontextpathlen = strlen($this->context->path);
+        $thiscontextid = $this->context->id;
+        $checkedfiles = array();
+        foreach ($files as &$f) {
+            if ($f->contextid == $thiscontextid ||
+                substr($f->path, 0, $thiscontextpathlen) === $thiscontextpath) {
+
+                $checkedfiles[] = ($returnfileids) ? $f->id : $f;
+            }
+        }
+
+        return $checkedfiles;
+    }
+
+    /**
+     * Download a zip file of the files with the given ids.
+     *
+     * This function does not return if the zip archive could be created.
+     *
+     * @param array $fileids file ids
+     */
+    public function download_files($fileids) {
+        global $DB, $CFG;
+
+        if (count($fileids) > LISTCOURSEFILES_MAX_FILES) {
+            throw new moodle_exception('too_many_files', 'local_listcoursefiles');
+        }
+
+        if (count($fileids) == 0) {
+            throw new moodle_exception('no_file_selected', 'local_listcoursefiles');
+        }
+
+        list($sqlin, $paramfids) = $DB->get_in_or_equal(array_keys($fileids), SQL_PARAMS_QM);
+        $sql = 'SELECT f.*, c.path, r.repositoryid, r.reference, r.lastsync AS referencelastsync
+                FROM {files} f
+                LEFT JOIN {context} c ON (c.id = f.contextid)
+                LEFT JOIN {files_reference} r ON (f.referencefileid = r.id)
+                WHERE f.id ' . $sqlin;
+        $res = $DB->get_records_sql($sql, $paramfids);
+
+        $checkedfiles = $this->check_files_context($res);
+        $fs = get_file_storage();
+        $filesforzipping = array();
+        foreach ($checkedfiles as $file) {
+            $fname = $this->download_get_unique_file_name($file->filename, $filesforzipping);
+            $filesforzipping[$fname] = $fs->get_file_instance($file);
+        }
+
+        $filename = clean_filename($this->coursemodinfo->get_course()->fullname . '.zip');
+        $tmpfile = tempnam($CFG->tempdir . '/', 'local_listcoursefiles');
+        $zip = new zip_packer();
+        if ($zip->archive_to_pathname($filesforzipping, $tmpfile)) {
+            send_temp_file($tmpfile, $filename);
+        }
+    }
+
+    /**
+     * Generate a unique file name for storage.
+     *
+     * If a file does already exist with $filename in $existingfiles as key,
+     * a number in parentheses is appended to the file name.
+     *
+     * @param string $filename
+     * @param array $existingfiles
+     * @return string unique file name
+     */
+    protected function download_get_unique_file_name($filename, &$existingfiles) {
+        $name = clean_filename($filename);
+
+        $lastdot = strrpos($name, '.');
+        if ($lastdot === false) {
+            $filename = $name;
+            $extension = '';
+        } else {
+            $filename = substr($name, 0, $lastdot);
+            $extension = substr($name, $lastdot);
+        }
+
+        $i = 1;
+        while (isset($existingfiles[$name])) {
+            $name = $filename . '(' . $i++ . ')' . $extension;
+        }
+
+        return $name;
     }
 
     /**

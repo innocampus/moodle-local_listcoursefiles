@@ -15,6 +15,10 @@
     margin-left: 4px;
 }
 
-.files_actions {
-    margin-top: 10px;
+.local_listcoursefiles_files_actions {
+    margin-top: 25px;
+}
+
+.local_listcoursefiles_files_action {
+    margin-top: 5px;
 }

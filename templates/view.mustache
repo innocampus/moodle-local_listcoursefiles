@@ -81,13 +81,23 @@
 
     {{{paging_bar_html}}}
 
-    <div class="files_actions">
+    <div class="local_listcoursefiles_files_actions">
+        {{#download_allowed}}
+            <div class="local_listcoursefiles_files_action">
+               <button type="submit" name="action" value="download">
+                    {{#str}}zip_download,local_listcoursefiles{{/str}}
+                </button>
+            </div>
+        {{/download_allowed}}
         {{#change_license_allowed}}
-            {{{license_select_html}}}
-            <button type="submit" name="action" value="change_license">
-                {{#str}}change_license,local_listcoursefiles{{/str}}
-            </button>
+            <div class="local_listcoursefiles_files_action">
+                {{{license_select_html}}}
+                <button type="submit" name="action" value="change_license">
+                    {{#str}}change_license,local_listcoursefiles{{/str}}
+                </button>
+            </div>
         {{/change_license_allowed}}
+        
     </div>
 
     </form>

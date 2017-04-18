@@ -45,6 +45,15 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         ),
     ),
+    'local/listcoursefiles:download' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        ),
+    ),
 );
 
 

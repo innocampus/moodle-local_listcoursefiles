@@ -29,6 +29,7 @@ if ($limit < 1 || $limit > LISTCOURSEFILES_MAX_FILES) {
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHAEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
+$chosenfiles = optional_param_array('file', array(), PARAM_INT);
 
 $context = context_course::instance($courseid);
 $title = get_string('pluginname', 'local_listcoursefiles');
@@ -45,15 +46,23 @@ $PAGE->set_pagelayout('incourse');
 require_login($courseid);
 require_capability('local/listcoursefiles:view', $context);
 $changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
+$downloadallowed = has_capability('local/listcoursefiles:download', $context);
+
 
 $files = new Course_files($courseid, $context, $component, $filetype);
 
 if ($action === 'change_license' && $changelicenseallowed) {
     require_sesskey();
-    $chosenfiles = optional_param_array('file', array(), PARAM_INT);
     $license = required_param('license', PARAM_ALPHAEXT);
     try {
         $files->set_files_license($chosenfiles, $license);
+    } catch (moodle_exception $e) {
+        \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
+    }
+} else if ($action === 'download' && $downloadallowed) {
+    require_sesskey();
+    try {
+        $files->download_files($chosenfiles);
     } catch (moodle_exception $e) {
         \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
     }
@@ -72,6 +81,7 @@ $tpldata->sesskey = sesskey();
 $tpldata->files = array();
 $tpldata->files_exist = count($filelist) > 0;
 $tpldata->change_license_allowed = $changelicenseallowed;
+$tpldata->download_allowed = $downloadallowed;
 $tpldata->license_select_html = html_writer::select($licenses, 'license');
 
 foreach ($filelist as $file) {
