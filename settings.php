@@ -22,17 +22,23 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/local/listcoursefiles/lib.php');
 
 if ($hassiteconfig) {
+    $licenses = local_listcoursefiles\course_files::get_available_licenses();
+    $licensenames = '';
+    foreach ($licenses as $short => $full) {
+        $licensenames .= "$full ($short), ";
+    }
+    $licensenames = substr($licensenames, 0, -2);
+
     $settings = new admin_settingpage('local_listcoursefiles',
             get_string('pluginname', 'local_listcoursefiles'), 'moodle/site:config');
     $settings->add(new admin_setting_configtextarea('local_listcoursefiles/licensecolors',
             get_string('license_colors', 'local_listcoursefiles'),
-            get_string('license_colors_desc', 'local_listcoursefiles'),
+            get_string('license_colors_desc', 'local_listcoursefiles', $licensenames),
             ''));
 
     $ADMIN->add('localplugins', $settings);
