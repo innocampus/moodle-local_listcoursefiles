@@ -1,7 +1,8 @@
 moodle-local_listcoursefiles
 ============================
 
-This extension allows teachers to view a list of all files in a course and to change the license for each file.
+This extension allows teachers to view a list of all files in a course and to change the license for each file. It is also
+possible to download the files in a ZIP archive.
 
 Adding a new license
 ====================
