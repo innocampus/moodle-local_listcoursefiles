@@ -247,7 +247,7 @@ class course_files {
 
         $name = (isset(self::$licenses[$licenseshort])) ? self::$licenses[$licenseshort] : '';
         if (isset(self::$licenscolors[$licenseshort])) {
-            $name = \html_writer::tag('span', $name, array('style' => 'color: #' . self::$licenscolors[$licenseshort]));
+            $name = \html_writer::tag('span', $name, array('style' => 'background-color: #' . self::$licenscolors[$licenseshort]));
         }
         return $name;
     }
