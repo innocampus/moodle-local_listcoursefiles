@@ -27,7 +27,7 @@
 
 $string['all_files'] = 'All files';
 $string['all_wo_submissions'] = 'All w/o submissions';
-$string['change_license'] = 'Change license';
+$string['change_license'] = 'Change license to';
 $string['check_uncheck_all'] = 'Select all/none';
 $string['component'] = 'Component';
 $string['description'] = 'This page lists all files in the course. Please note that due to technical reasons not all files can be viewed from here.';

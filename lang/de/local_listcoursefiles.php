@@ -27,7 +27,7 @@
 
 $string['all_files'] = 'Alle Dateien';
 $string['all_wo_submissions'] = 'Alle außer Abgaben';
-$string['change_license'] = 'Ändere Lizenz';
+$string['change_license'] = 'Ändere Lizenz auf';
 $string['check_uncheck_all'] = 'Alle/keine auswählen';
 $string['component'] = 'Komponente';
 $string['description'] = 'Diese Seite listet alle Dateien im Kurs auf. Hinweis: Nicht alle Dateien können von hier heruntergeladen werden.';
