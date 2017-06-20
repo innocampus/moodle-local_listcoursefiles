@@ -40,7 +40,6 @@ $string['filetype_audio'] = 'Audio';
 $string['filetype_document'] = 'Document';
 $string['filetype_image'] = 'Image';
 $string['filetype_other'] = 'Other';
-$string['filetype_text'] = 'Text';
 $string['filetype_video'] = 'Video';
 $string['filter_components'] = 'Filter component';
 $string['filter_filetype'] = 'Filter file type';

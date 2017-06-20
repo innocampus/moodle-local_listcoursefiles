@@ -70,12 +70,15 @@ class course_files {
      * @var array
      */
     static protected $mimetypes = array(
-        'document' => array('application/pdf', 'application/epub+zip', 'application/vnd.ms-%',
-            'application/vnd.openxmlformats-officedocument%'),
+        'document' => array('application/epub+zip', 'application/msword', 'application/pdf',
+            'application/postscript', 'application/vnd.ms-%', 'application/vnd.oasis.opendocument%',
+            'application/vnd.openxmlformats-officedocument%', 'application/vnd.sun.xml%',
+            'application/x-digidoc', 'application/xhtml+xml', 'application/x-javascript',
+            'application/x-latex', 'application/xml', 'application/x-ms%', 'application/x-tex%',
+            'document%', 'spreadsheet', 'text/%'),
         'image' => array('image/%'),
         'audio' => array('audio/%'),
         'video' => array('video/%'),
-        'text' => array('text/%', 'application/x-tex'),
         'archive' => array('application/zip', 'application/x-tar', 'application/g-zip',
             'application/x-rar-compressed', 'application/x-7z-compressed', 'application/vnd.moodle.backup'),
     );
