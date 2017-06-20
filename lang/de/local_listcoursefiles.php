@@ -41,6 +41,7 @@ $string['filetype_document'] = 'Textdokument';
 $string['filetype_image'] = 'Bild';
 $string['filetype_other'] = 'Andere';
 $string['filetype_video'] = 'Video';
+$string['file_expired'] = 'Diese Datei steht aus urheberrechtlichen Gründen den Teilnehmern nicht zur Verfügung.';
 $string['filter_components'] = 'Nach Komponente filtern';
 $string['filter_filetype'] = 'Nach Dateityp filtern';
 $string['invalid_license'] = 'Ungültige Lizenz gegeben.';

@@ -462,6 +462,50 @@ class course_files {
         return null;
     }
 
+    /**
+     * Check if a file with a specific license has expired.
+     *
+     * This checks if a file has been expired because:
+     *  - it is a document (has a particular mimetype),
+     *  - has been provided under a specific license
+     *  - and the expiry date is exceed (in respect of the coure start date and the file creation time).
+     *
+     * The following settings need to be defined in the config.php:
+     *   array $CFG->fileexpirylicenses which licenses (shortnames) expire
+     *   int $CFG->fileexpirydate when do files expire (unix time)
+     *   array $CFG->filemimetypes['document'] mime types of documents
+     *
+     * These adjustments were made by Technische Universität Berlin in order to conform to § 52a UrhG.
+     *
+     * @param stdClass $file
+     * @return boolean whether file is allowed to be delivered to students
+     */
+    public function check_mimetype_license_expiry_date($file) {
+        global $CFG, $COURSE;
+
+        // Check if enabled/configured.
+        if (!isset($CFG->fileexpirydate, $CFG->fileexpirylicenses, $CFG->filemimetypes['document'])) {
+            return true;
+        }
+
+        if (in_array($file->license, $CFG->fileexpirylicenses)) {
+            $isdoc = false;
+            $fmimetype = $file->mimetype;
+            foreach ($CFG->filemimetypes['document'] as $mime) {
+                if ($mime === $fmimetype || (substr($mime, -1) === '%' && strncmp($mime, $fmimetype, strlen($mime) - 1) === 0)) {
+                    $isdoc = true;
+                    break;
+                }
+            }
+            $coursestart = isset($COURSE->startdate) ? $COURSE->startdate : 0;
+            if ($isdoc && $CFG->fileexpirydate > max($coursestart, $file->timecreated)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static function get_file_types() {
         $types = array('all' => \get_string('filetype_all', 'local_listcoursefiles'));
         foreach (self::$mimetypes as $type => $unused) {
@@ -482,5 +526,16 @@ class course_files {
         }
 
         return $mimetype;
+    }
+
+    /**
+     * Check if the predefined list of mimetypes should be overridden.
+     */
+    public static function check_config_mimetypes() {
+        global $CFG;
+
+        if (isset($CFG->filemimetypes)) {
+            self::$mimetypes = $CFG->filemimetypes;
+        }
     }
 }

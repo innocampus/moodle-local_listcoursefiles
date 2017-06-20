@@ -41,6 +41,7 @@ $string['filetype_document'] = 'Document';
 $string['filetype_image'] = 'Image';
 $string['filetype_other'] = 'Other';
 $string['filetype_video'] = 'Video';
+$string['file_expired'] = 'This file is unavailable for students for copyright reasons.';
 $string['filter_components'] = 'Filter component';
 $string['filter_filetype'] = 'Filter file type';
 $string['invalid_license'] = 'Invalid license given';

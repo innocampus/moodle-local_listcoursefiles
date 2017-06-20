@@ -37,7 +37,7 @@
     <form action="{{{url}}}" method="post" id="filelist">
     <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
 
-    <table align="center" class="generaltable">
+    <table align="center" class="local_listcoursefiles_table generaltable">
         <thead>
             <tr>
                 <th class="header c0" scope="col"></th>
@@ -53,7 +53,12 @@
         {{#files}}
             <tr>
                 <td class="cell c0" style="text-align:left;">
-                    <input type="checkbox" class="filecheckbox" name="file[{{file_id}}]" />
+                    <input type="checkbox" class="local_listcoursefiles_filecheckbox" name="file[{{file_id}}]" />
+                    {{#file_expired}}
+                        <span class="local_listcoursefiles_file_expired">
+                            {{#pix}}i/warning, core, {{#str}}file_expired,local_listcoursefiles{{/str}}{{/pix}}
+                        </span>
+                    {{/file_expired}}
                 </td>
                 <td class="cell c1">
                     {{#file_url}}

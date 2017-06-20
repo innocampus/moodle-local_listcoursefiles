@@ -56,7 +56,7 @@ require_capability('local/listcoursefiles:view', $context);
 $changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
 $downloadallowed = has_capability('local/listcoursefiles:download', $context);
 
-
+local_listcoursefiles\course_files::check_config_mimetypes();
 $files = new local_listcoursefiles\course_files($courseid, $context, $component, $filetype);
 
 if ($action === 'change_license' && $changelicenseallowed) {
@@ -100,6 +100,7 @@ foreach ($filelist as $file) {
     $tplfile->file_size = display_size($file->filesize);
     $tplfile->file_type = local_listcoursefiles\course_files::get_file_type_translation($file->mimetype);
     $tplfile->file_uploader = fullname($file);
+    $tplfile->file_expired = !$files->check_mimetype_license_expiry_date($file);
 
     $fileurl = $files->get_file_download_url($file);
     $tplfile->file_url = ($fileurl) ? $fileurl->out() : false;
