@@ -538,4 +538,49 @@ class course_files {
             self::$mimetypes = $CFG->filemimetypes;
         }
     }
+
+    /**
+     * Checks if embedded files have been used
+     * @param $file
+     * @param $courseid
+     * @return bool
+     * @throws \dml_exception
+     */
+    public static function get_file_use($file, $courseid){
+        global $DB;
+        $isused = false;
+        switch ($file->component){
+            case 'course' :
+                if($file->filearea === 'section') {
+                    if ($section = $DB->get_record('course_sections', ['id' => $file->itemid])) {
+                        if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . $file->filename)) {
+                            $isused = true;
+                        }
+                    }
+                } else if ($file->filearea === 'overviewfiles') {
+                    $isused = true;
+                } else if ($file->filearea === 'summary') {
+                    $course = $DB->get_record('course', ['id' => $courseid]);
+                    if (false !== strpos($course->summary, '@@PLUGINFILE@@/' . $file->filename)) {
+                        $isused = true;
+                    }
+                }
+                break;
+            case 'mod_label' :
+                $sql = 'SELECT l.* FROM {context} ctx
+                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                            JOIN {label} l ON l.id = cm.instance
+                            WHERE ctx.id = ?';
+
+                if( $label = $DB->get_record_sql($sql, [$file->contextid])){
+                    if(false !== strpos($label->intro, '@@PLUGINFILE@@/' . str_replace(' ', '%20', $file->filename))){
+                        $isused = true;
+                    }
+                }
+                break;
+            default :
+                $isused = null;
+        }
+        return $isused;
+    }
 }

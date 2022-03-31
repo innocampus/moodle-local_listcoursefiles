@@ -46,7 +46,8 @@
                 <th class="header c3" scope="col">{{#str}}component,local_listcoursefiles{{/str}}</th>
                 <th class="header c4" scope="col">{{#str}}mimetype,local_listcoursefiles{{/str}}</th>
                 <th class="header c5" scope="col">{{#str}}license,local_listcoursefiles{{/str}}</th>
-                <th class="header c6 lastcol" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
+                <th class="header c6" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
+                <th class="header c7 lastcol" scope="col">Used</th>
             </tr>
         </thead>
         <tbody>
@@ -79,7 +80,8 @@
                 </td>
                 <td class="cell c4">{{file_type}}</td>
                 <td class="cell c5">{{{file_license}}}</td>
-                <td class="cell c6 lastcol">{{file_uploader}}</td>
+                <td class="cell c6">{{file_uploader}}</td>
+                <td class="cell c7 lastcol">{{file_used}}</td>
             </tr>
         {{/files}}
     </table>

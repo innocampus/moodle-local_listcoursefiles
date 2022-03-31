@@ -54,6 +54,7 @@ $string['listcoursefiles:download'] = 'Dateien im Kurs herunterladen';
 $string['listcoursefiles:view'] = 'Alle Dateien in einem Kurs einsehen';
 $string['mimetype'] = 'Dateityp';
 $string['nothingfound'] = 'Keine Dateien gefunden.';
+$string['nottested'] = 'Not tested';
 $string['no_file_selected'] = 'Es wurde keine Datei ausgewählt.';
 $string['pluginname'] = 'Auflistung der Kursdateien';
 $string['too_many_files'] = 'Zu viele Dateien gegeben';
