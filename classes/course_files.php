@@ -24,8 +24,10 @@
 
 namespace local_listcoursefiles;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Class course_files
+ * @package local_listcoursefiles
+ */
 class course_files {
     /**
      * @var context
@@ -46,13 +48,25 @@ class course_files {
      * @var array
      */
     protected $filelist = null;
+
+    /**
+     * @var null
+     */
     static protected $licenses = null;
+
+    /**
+     * @var null
+     */
     static protected $licenscolors = null;
 
     /**
      * @var string
      */
     protected $filtercomponent;
+
+    /**
+     * @var string
+     */
     protected $filterfiletype;
 
     /**
@@ -83,6 +97,14 @@ class course_files {
             'application/x-rar-compressed', 'application/x-7z-compressed', 'application/vnd.moodle.backup'),
     );
 
+    /**
+     * course_files constructor.
+     * @param integer $courseid
+     * @param \context $context
+     * @param string $component
+     * @param string $filetype
+     * @throws \moodle_exception
+     */
     public function __construct($courseid, \context $context, $component, $filetype) {
         $this->courseid = $courseid;
         $this->context = $context;
@@ -152,6 +174,13 @@ class course_files {
         return $this->filelist;
     }
 
+    /**
+     * Creates an SQL snippet
+     *
+     * @param array $types
+     * @param boolean $in
+     * @return string
+     */
     protected function get_sql_mimetype($types, $in) {
         if (is_array($types)) {
             $list = array();
@@ -217,6 +246,12 @@ class course_files {
         return $this->components;
     }
 
+    /**
+     * Remember licences as array
+     *
+     * @return array|null
+     * @throws \coding_exception
+     */
     public static function get_available_licenses() {
         global $CFG;
 
@@ -232,9 +267,12 @@ class course_files {
     }
 
     /**
+     * Wraps license name in span element with background color as per plugin settings or
+     * retuns license name if no color set
      *
-     * @param string short name of a license
-     * @return full name of the license with HTML
+     * @param string $licenseshort short name of a license
+     * @return string full name of the license with HTML
+     * @throws dml_exception|coding_exception
      */
     public static function get_license_name_color($licenseshort) {
         if (self::$licenscolors === null) {
@@ -260,6 +298,7 @@ class course_files {
      *
      * @param array $fileids keys are the file IDs
      * @param string $license shortname of the license
+     * @throws moodle_exception
      */
     public function set_files_license($fileids, $license) {
         global $DB;
@@ -313,9 +352,9 @@ class course_files {
      *
      * The file objects need to have the contextid and the context path.
      *
-     * @param array files array of stdClass as retrieved from the files and context table
-     * @param bool returnfileids return file ids or objects
-     * @return file ids that belong to the context
+     * @param array $files array of stdClass as retrieved from the files and context table
+     * @param bool $returnfileids return file ids or objects
+     * @return array file ids that belong to the context
      */
     protected function check_files_context(&$files, $returnfileids = false) {
         $thiscontextpath = $this->context->path . '/';
@@ -337,6 +376,7 @@ class course_files {
      * This function does not return if the zip archive could be created.
      *
      * @param array $fileids file ids
+     * @throws moodle_exception
      */
     public function download_files(&$fileids) {
         global $DB, $CFG;
@@ -406,9 +446,10 @@ class course_files {
     /**
      * Try to get the url for the component (module or course).
      *
-     * @param int contextlevel
-     * @param int instanceid
+     * @param int $contextlevel
+     * @param int $instanceid
      * @return null|moodle_url
+     * @throws moodle_exception
      */
     public function get_component_url($contextlevel, $instanceid) {
         if ($contextlevel == CONTEXT_MODULE) {
@@ -506,6 +547,12 @@ class course_files {
         return true;
     }
 
+    /**
+     * Collate an array of available file types
+     *
+     * @return array
+     * @throws \coding_exception
+     */
     public static function get_file_types() {
         $types = array('all' => \get_string('filetype_all', 'local_listcoursefiles'));
         foreach (self::$mimetypes as $type => $unused) {
@@ -515,6 +562,13 @@ class course_files {
         return $types;
     }
 
+    /**
+     * Try to get the name of the file type in the user's lang
+     *
+     * @param string $mimetype
+     * @return \lang_string|string
+     * @throws \coding_exception
+     */
     public static function get_file_type_translation($mimetype) {
         foreach (self::$mimetypes as $name => $types) {
             foreach ($types as $mime) {
@@ -541,17 +595,18 @@ class course_files {
 
     /**
      * Checks if embedded files have been used
-     * @param $file
-     * @param $courseid
+     *
+     * @param object $file
+     * @param integer $courseid
      * @return bool
      * @throws \dml_exception
      */
-    public static function get_file_use($file, $courseid){
+    public static function get_file_use($file, $courseid) {
         global $DB;
         $isused = false;
         switch ($file->component){
             case 'course' :
-                if($file->filearea === 'section') {
+                if ($file->filearea === 'section') {
                     if ($section = $DB->get_record('course_sections', ['id' => $file->itemid])) {
                         if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . $file->filename)) {
                             $isused = true;
@@ -572,8 +627,8 @@ class course_files {
                             JOIN {label} l ON l.id = cm.instance
                             WHERE ctx.id = ?';
 
-                if( $label = $DB->get_record_sql($sql, [$file->contextid])){
-                    if(false !== strpos($label->intro, '@@PLUGINFILE@@/' . str_replace(' ', '%20', $file->filename))){
+                if ($label = $DB->get_record_sql($sql, [$file->contextid])) {
+                    if (false !== strpos($label->intro, '@@PLUGINFILE@@/' . str_replace(' ', '%20', $file->filename))) {
                         $isused = true;
                     }
                 }

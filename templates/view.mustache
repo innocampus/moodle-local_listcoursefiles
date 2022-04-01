@@ -14,6 +14,51 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
+{{!
+    @template local_listcoursefiles/view
+
+    List course files layout template.
+
+    Context variables required for this template:
+    * course_selection_html    - HTML snippet for course select drop-down menu
+    * component_selection_html - HTML snippet for file component select drop-down menu
+    * file_type_selection_html - HTML snippet for file type select drop-down menu
+    * paging_bar_html          - HTML paging bar snippet from OUTPUT
+    * url                      - Form post URL
+    * sesskey                  - Sesskey string
+    * files                    - array of files.
+    * files_exist              - boolean
+    * change_license_allowed   - boolean, can the user change the file license
+    * download_allowed         - boolean, can the user download files
+    * license_select_html      - HTML snippet for license select drop-down menu
+
+    Example context (json):
+    {
+        "course_selection_html"    : "",
+        "component_selection_html" : "",
+        "file_type_selection_html" : "",
+        "paging_bar_html"          : "",
+        "url"                      : "https://mymoodle.invalid/local/listcoursefiles/index.php?courseid=34",
+        "sesskey"                  : "lDMLz7xAGt",
+        "files"                    : [{
+                                        "file_expired"      : 0,
+                                        "file_name"         : "my_picture.png",
+                                        "file_url"          : "",
+                                        "file_size"         : "516.1KB",
+                                        "file_component"    : "Course",
+                                        "file_component_url": "",
+                                        "file_type"         : "Image",
+                                        "file_license"      : "Creative Commons - NoDerivs",
+                                        "file_uploader"     : "Admin User",
+                                        "file_used"         : "Yes"
+                                     }],
+        "files_exist"              : 3,
+        "change_license_allowed"   : 1,
+        "download_allowed"         : 1,
+        "license_select_html"      : ""
+    }
+
+}}
 <div class="local_listcoursefiles_menu">
     <div class="local_listcoursefiles_selection">
         {{#str}}mycourses{{/str}}: {{{course_selection_html}}}
@@ -37,7 +82,7 @@
     <form action="{{{url}}}" method="post" id="filelist">
     <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
 
-    <table align="center" class="local_listcoursefiles_table generaltable">
+    <table class="local_listcoursefiles_table generaltable">
         <thead>
             <tr>
                 <th class="header c0" scope="col"></th>
@@ -118,7 +163,7 @@
 {{#js}}
     require(['jquery'], function($) {
     var nextstatus = true;
-    $('.local_listcoursefiles_check_uncheck_all').click(function () {
+    $('.local_listcoursefiles_check_uncheck_all').click(function() {
         $('input:checkbox').prop('checked', nextstatus);
         nextstatus = !nextstatus;
     });

@@ -111,9 +111,9 @@ foreach ($filelist as $file) {
     $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
 
     $isused = get_string('nottested', 'local_listcoursefiles');
-    if($files->get_file_use($file, $courseid) === true){
+    if ($files->get_file_use($file, $courseid) === true) {
         $isused = get_string('yes', 'core');
-    } else if($files->get_file_use($file, $courseid) === false) {
+    } else if ($files->get_file_use($file, $courseid) === false) {
         $isused = get_string('no', 'core');
     }
 
