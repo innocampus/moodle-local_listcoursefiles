@@ -608,7 +608,7 @@ class course_files {
             case 'course' :
                 if ($file->filearea === 'section') {
                     if ($section = $DB->get_record('course_sections', ['id' => $file->itemid])) {
-                        if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . $file->filename)) {
+                        if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
                             $isused = true;
                         }
                     }
@@ -616,7 +616,7 @@ class course_files {
                     $isused = true;
                 } else if ($file->filearea === 'summary') {
                     $course = $DB->get_record('course', ['id' => $courseid]);
-                    if (false !== strpos($course->summary, '@@PLUGINFILE@@/' . $file->filename)) {
+                    if (false !== strpos($course->summary, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
                         $isused = true;
                     }
                 }
@@ -628,7 +628,7 @@ class course_files {
                             WHERE ctx.id = ?';
 
                 if ($label = $DB->get_record_sql($sql, [$file->contextid])) {
-                    if (false !== strpos($label->intro, '@@PLUGINFILE@@/' . str_replace(' ', '%20', $file->filename))) {
+                    if (false !== strpos($label->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
                         $isused = true;
                     }
                 }
