@@ -122,11 +122,12 @@
                     {{^file_component_url}}
                         {{file_component}}
                     {{/file_component_url}}
+                    {{#file_editurl}}<a href="{{file_editurl}}"><i class="icon fa fa-cog fa-fw" aria-hidden="true"></i></a>{{/file_editurl}}
                 </td>
                 <td class="cell c4">{{file_type}}</td>
                 <td class="cell c5">{{{file_license}}}</td>
                 <td class="cell c6">{{file_uploader}}</td>
-                <td class="cell c7 lastcol">{{file_used}}</td>
+                <td class="cell c7 lastcol"><span class="fileused">{{file_used}}</span></td>
             </tr>
         {{/files}}
     </table>

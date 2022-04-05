@@ -106,18 +106,21 @@ foreach ($filelist as $file) {
     $tplfile->file_url = ($fileurl) ? $fileurl->out() : false;
     $tplfile->file_name = $file->filename;
 
-    $componenturl = $files->get_component_url($file->contextlevel, $file->instanceid, $file->filearea, $file->itemid);
+    $componenturl = $files->get_component_url($file);
     $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
     $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
 
-    $isused = get_string('nottested', 'local_listcoursefiles');
-    if ($files->get_file_use($file, $courseid) === true) {
-        $isused = get_string('yes', 'core');
-    } else if ($files->get_file_use($file, $courseid) === false) {
-        $isused = get_string('no', 'core');
+    $isused = $files->get_file_use($file, $courseid);
+
+    if ($isused === true) {
+        $tplfile->file_used = get_string('yes', 'core');
+    } else if ($isused === false) {
+        $tplfile->file_used = get_string('no', 'core');
+    } else {
+        $tplfile->file_used = get_string('nottested', 'local_listcoursefiles');
     }
 
-    $tplfile->file_used = $isused;
+    $tplfile->file_editurl = $files->get_edit_url($file, $courseid);
     $tpldata->files[] = $tplfile;
 }
 

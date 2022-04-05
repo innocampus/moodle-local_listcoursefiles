@@ -446,23 +446,28 @@ class course_files {
     /**
      * Try to get the url for the component (module or course).
      *
-     * @param int $contextlevel
-     * @param int $instanceid
-     * @param string $filearea
-     * @return null|moodle_url
+     * @param object $file
+     * @return null|\moodle_url
      * @throws moodle_exception
      */
-    public function get_component_url($contextlevel, $instanceid, $filearea, $itemid) {
-        if ($contextlevel == CONTEXT_MODULE) {
-            if (!empty($this->coursemodinfo->cms[$instanceid])) {
-                return $this->coursemodinfo->cms[$instanceid]->url;
+    public function get_component_url($file) {
+        if ($file->contextlevel == CONTEXT_MODULE) {
+            if (!empty($this->coursemodinfo->cms[$file->instanceid])) {
+                return $this->coursemodinfo->cms[$file->instanceid]->url;
             }
-        } else if ($contextlevel == CONTEXT_COURSE) {
-            $params = array('id' => $this->courseid);
-            if ($filearea === 'section') {
-                $params['sectionid'] = $itemid;
+        } else if ($file->contextlevel == CONTEXT_COURSE) {
+            if ($file->component === 'contentbank') {
+                return new \moodle_url('/contentbank/index.php', ['contextid' => $file->contextid]);
+            } else if ($file->filearea === 'section') {
+                return new \moodle_url('/course/view.php', array(
+                    'id' => $this->courseid,
+                    'sectionid' => $file->itemid
+                ));
+            } else {
+                return new \moodle_url('/course/info.php', array(
+                    'id' => $this->courseid
+                ));
             }
-            return new \moodle_url('/course/view.php', $params);
         }
 
         return null;
@@ -627,13 +632,20 @@ class course_files {
                 }
                 break;
             case 'mod_label' :
-                $sql = 'SELECT l.* FROM {context} ctx
-                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                            JOIN {label} l ON l.id = cm.instance
-                            WHERE ctx.id = ?';
+            case 'mod_forum' :
+                if ($file->filearea !== 'intro') { // Just checking description for now.
+                    $isused = null;
+                    break;
+                }
+                $modname = str_replace('mod_', '', $file->component);
 
-                if ($label = $DB->get_record_sql($sql, [$file->contextid])) {
-                    if (false !== strpos($label->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                $sql = 'SELECT l.* FROM {context} ctx
+                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                        JOIN {' . $modname . '} l ON l.id = cm.instance
+                        WHERE ctx.id = ?';
+
+                if ($mod = $DB->get_record_sql($sql, [$file->contextid])) {
+                    if (false !== strpos($mod->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
                         $isused = true;
                     }
                 }
@@ -642,5 +654,41 @@ class course_files {
                 $isused = null;
         }
         return $isused;
+    }
+
+    /**
+     * Creates the URL for the editor where the file is added
+     *
+     * @param object $file
+     * @return \moodle_url|string
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
+    public function get_edit_url($file) {
+        global $DB;
+        $url = '';
+        switch ($file->component){
+            case 'course' :
+                if ($file->filearea === 'section') {
+                    $url = new \moodle_url('/course/editsection.php?', ['id' => $file->itemid]);
+                } else if ($file->filearea === 'overviewfiles' || $file->filearea === 'summary') {
+                    $url = new \moodle_url('/course/edit.php?', ['id' => $this->courseid]);
+                }
+                break;
+            case 'mod_forum' :
+            case 'mod_label' :
+                if ($file->filearea !== 'intro') { // Just checking description for now.
+                    break;
+                }
+                $sql = 'SELECT cm.* FROM {context} ctx
+                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                        WHERE ctx.id = ?';
+                $mod = $DB->get_record_sql($sql, [$file->contextid]);
+                $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+                break;
+            default :
+                $isused = null;
+        }
+        return $url;
     }
 }
