@@ -448,16 +448,21 @@ class course_files {
      *
      * @param int $contextlevel
      * @param int $instanceid
+     * @param string $filearea
      * @return null|moodle_url
      * @throws moodle_exception
      */
-    public function get_component_url($contextlevel, $instanceid) {
+    public function get_component_url($contextlevel, $instanceid, $filearea, $itemid) {
         if ($contextlevel == CONTEXT_MODULE) {
             if (!empty($this->coursemodinfo->cms[$instanceid])) {
                 return $this->coursemodinfo->cms[$instanceid]->url;
             }
         } else if ($contextlevel == CONTEXT_COURSE) {
-            return new \moodle_url('/course/view.php', array('id' => $this->courseid));
+            $params = array('id' => $this->courseid);
+            if ($filearea === 'section') {
+                $params['sectionid'] = $itemid;
+            }
+            return new \moodle_url('/course/view.php', $params);
         }
 
         return null;

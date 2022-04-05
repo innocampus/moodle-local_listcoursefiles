@@ -106,7 +106,7 @@ foreach ($filelist as $file) {
     $tplfile->file_url = ($fileurl) ? $fileurl->out() : false;
     $tplfile->file_name = $file->filename;
 
-    $componenturl = $files->get_component_url($file->contextlevel, $file->instanceid);
+    $componenturl = $files->get_component_url($file->contextlevel, $file->instanceid, $file->filearea, $file->itemid);
     $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
     $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
 
