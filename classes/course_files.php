@@ -611,12 +611,15 @@ class course_files {
      * @return bool
      * @throws \dml_exception
      */
-    public static function get_file_use($file, $courseid) {
+    public function get_file_use($file, $courseid) {
         global $DB;
         $isused = false;
-        switch ($file->component){
-            case 'course' :
-                if ($file->filearea === 'section') {
+
+        switch ($file->contextlevel){
+            case '50' : // Course.
+                if ($file->component === 'contentbank') {
+                    $isused = null;
+                } else if ($file->filearea === 'section') {
                     if ($section = $DB->get_record('course_sections', ['id' => $file->itemid])) {
                         if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
                             $isused = true;
@@ -631,22 +634,24 @@ class course_files {
                     }
                 }
                 break;
-            case 'mod_label' :
-            case 'mod_forum' :
-                if ($file->filearea !== 'intro') { // Just checking description for now.
-                    $isused = null;
-                    break;
-                }
+            case '70' : // Course module.
                 $modname = str_replace('mod_', '', $file->component);
-
-                $sql = 'SELECT l.* FROM {context} ctx
-                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                        JOIN {' . $modname . '} l ON l.id = cm.instance
-                        WHERE ctx.id = ?';
-
-                if ($mod = $DB->get_record_sql($sql, [$file->contextid])) {
-                    if (false !== strpos($mod->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                        $isused = true;
+                if ($file->filearea === 'intro') {
+                    $sql = 'SELECT l.* FROM {context} ctx
+                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                            JOIN {' . $modname . '} l ON l.id = cm.instance
+                            WHERE ctx.id = ?';
+                    if ($mod = $DB->get_record_sql($sql, [$file->contextid])) {
+                        if (false !== strpos($mod->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                            $isused = true;
+                        }
+                    }
+                } else {
+                    $fn = 'get_file_use_' . $modname;
+                    if (is_callable(array($this, $fn))) {
+                        $isused = call_user_func(array($this, $fn), $file);
+                    } else {
+                        $isused = null;
                     }
                 }
                 break;
@@ -654,6 +659,155 @@ class course_files {
                 $isused = null;
         }
         return $isused;
+    }
+
+    /**
+     * @param object $file
+     * @return bool | null
+     */
+    private function get_file_use_assign($file) {
+        // File areas = intro, introattachment.
+        if ($file->filearea === 'introattachment') {
+            return true;
+        }
+    }
+
+    /**
+     * @param object $file
+     * @return bool | null
+     * @throws \dml_exception
+     */
+    private function get_file_use_book($file) {
+        // File areas = intro, chapter.
+        global $DB;
+        if ($file->filearea === 'chapter') {
+            $chapter = $DB->get_record('book_chapters', ['id' => $file->itemid]);
+            if (false !== strpos($chapter->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * @param object $file
+     * @return bool | null
+     * @throws \dml_exception
+     */
+    private function get_file_use_data($file) {
+        // File areas = intro, content.
+        global $DB;
+        if ($file->filearea === 'content') {
+            $sql = 'SELECT * FROM {data_content} dc
+                            JOIN {data_fields} df ON df.id = dc.fieldid
+                            WHERE dc.id = ?';
+            $data = $DB->get_record_sql($sql, [$file->itemid]);
+            if ($data->type !== 'textarea' ||
+                false !== strpos($data->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * @param object $file
+     * @return bool | null
+     * @throws \dml_exception
+     */
+    private function get_file_use_feedback($file) {
+        // File areas = intro, item, page_after_submit.
+        global $DB;
+        if ($file->filearea === 'item') {
+            $item = $DB->get_record('feedback_item', ['id' => $file->itemid]);
+            if (false !== strpos($item->presentation, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if ($file->filearea = 'page_after_submit') {
+            $sql = 'SELECT f.* FROM {feedback} f
+                    JOIN {course_modules} cm ON cm.instance = f.id
+                    JOIN {context} ctx ON ctx.instanceid = cm.id
+                    WHERE ctx.id = ?';
+            $feedback = $DB->get_record_sql($sql, [$file->contextid]);
+            if (false !== strpos($feedback->page_after_submit, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * @param $file
+     * @return bool
+     */
+    private function get_file_use_folder($file) {
+        // File areas = intro, content.
+        return true;
+    }
+
+    /**
+     * @param object $file
+     * @return bool | null
+     * @throws \dml_exception
+     */
+    private function get_file_use_forum($file) {
+        // File areas = intro, post.
+        global $DB;
+        if ($file->filearea === 'post') {
+            $post = $DB->get_record('forum_posts', ['id' => $file->itemid]);
+            if (false !== strpos($post->message, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if ($file->filearea === 'attachment') {
+            return true;
+        }
+    }
+
+    /**
+     * @param object $file
+     * @return bool
+     */
+    private function get_file_use_h5pactivity($file) {
+        // File areas = intro, package.
+        return true;
+    }
+
+    /**
+     * @param object file
+     * @return bool | null
+     * @throws \dml_exception
+     */
+    private function get_file_use_page($file) {
+        // File areas = intro, content.
+        global $DB;
+        if ($file->filearea === 'content') {
+            $sql = 'SELECT p.* FROM {page} p
+                    JOIN {course_modules} cm ON cm.instance = p.id
+                    JOIN {context} ctx ON ctx.instanceid = cm.id
+                    WHERE ctx.id = ?';
+            $page = $DB->get_record_sql($sql, [$file->contextid]);
+            if (false !== strpos($page->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * @param object $file
+     * @return bool
+     */
+    private function get_file_use_resource($file) {
+        // File areas = intro, content.
+        return true;
     }
 
     /**
@@ -667,16 +821,15 @@ class course_files {
     public function get_edit_url($file) {
         global $DB;
         $url = '';
-        switch ($file->component){
-            case 'course' :
+        switch ($file->contextlevel){
+            case '50' :
                 if ($file->filearea === 'section') {
                     $url = new \moodle_url('/course/editsection.php?', ['id' => $file->itemid]);
                 } else if ($file->filearea === 'overviewfiles' || $file->filearea === 'summary') {
                     $url = new \moodle_url('/course/edit.php?', ['id' => $this->courseid]);
                 }
                 break;
-            case 'mod_forum' :
-            case 'mod_label' :
+            case '70' :
                 if ($file->filearea !== 'intro') { // Just checking description for now.
                     break;
                 }
