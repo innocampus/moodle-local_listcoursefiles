@@ -110,7 +110,7 @@ foreach ($filelist as $file) {
     $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
     $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
 
-    $isused = $files->get_file_use($file, $courseid);
+    $isused = $files->is_file_used($file, $courseid);
 
     if ($isused === true) {
         $tplfile->file_used = get_string('yes', 'core');

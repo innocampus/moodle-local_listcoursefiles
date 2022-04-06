@@ -611,7 +611,7 @@ class course_files {
      * @return bool
      * @throws \dml_exception
      */
-    public function get_file_use($file, $courseid) {
+    public function is_file_used($file, $courseid) {
         global $DB;
         $isused = false;
 
@@ -620,34 +620,26 @@ class course_files {
                 if ($file->component === 'contentbank') {
                     $isused = null;
                 } else if ($file->filearea === 'section') {
-                    if ($section = $DB->get_record('course_sections', ['id' => $file->itemid])) {
-                        if (false !== strpos($section->summary, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                            $isused = true;
-                        }
-                    }
+                    $section = $DB->get_record('course_sections', ['id' => $file->itemid]);
+                    $isused = $this->is_embedded_file_used($section, 'summary', $file->filename);
                 } else if ($file->filearea === 'overviewfiles') {
                     $isused = true;
                 } else if ($file->filearea === 'summary') {
                     $course = $DB->get_record('course', ['id' => $courseid]);
-                    if (false !== strpos($course->summary, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                        $isused = true;
-                    }
+                    $isused = $this->is_embedded_file_used($course, 'summary', $file->filename);
                 }
                 break;
             case '70' : // Course module.
                 $modname = str_replace('mod_', '', $file->component);
                 if ($file->filearea === 'intro') {
-                    $sql = 'SELECT l.* FROM {context} ctx
+                    $sql = 'SELECT m.* FROM {context} ctx
                             JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                            JOIN {' . $modname . '} l ON l.id = cm.instance
+                            JOIN {' . $modname . '} m ON m.id = cm.instance
                             WHERE ctx.id = ?';
-                    if ($mod = $DB->get_record_sql($sql, [$file->contextid])) {
-                        if (false !== strpos($mod->intro, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                            $isused = true;
-                        }
-                    }
+                    $mod = $DB->get_record_sql($sql, [$file->contextid]);
+                    $isused = $this->is_embedded_file_used($mod, 'intro', $file->filename);
                 } else {
-                    $fn = 'get_file_use_' . $modname;
+                    $fn = 'is_file_used_' . $modname;
                     if (is_callable(array($this, $fn))) {
                         $isused = call_user_func(array($this, $fn), $file);
                     } else {
@@ -662,10 +654,11 @@ class course_files {
     }
 
     /**
+     * Additional file used checks for the Assignment activity module
      * @param object $file
      * @return bool | null
      */
-    private function get_file_use_assign($file) {
+    private function is_file_used_assign($file) {
         // File areas = intro, introattachment.
         if ($file->filearea === 'introattachment') {
             return true;
@@ -673,35 +666,34 @@ class course_files {
     }
 
     /**
+     * Additional file used checks for the Book resource module
      * @param object $file
      * @return bool | null
      * @throws \dml_exception
      */
-    private function get_file_use_book($file) {
+    private function is_file_used_book($file) {
         // File areas = intro, chapter.
         global $DB;
         if ($file->filearea === 'chapter') {
             $chapter = $DB->get_record('book_chapters', ['id' => $file->itemid]);
-            if (false !== strpos($chapter->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
+            $isused = $this->is_embedded_file_used($chapter, 'content', $file->filename);
+            return $isused;
         }
     }
 
     /**
+     * Additional file used checks for the Database activity module
      * @param object $file
      * @return bool | null
      * @throws \dml_exception
      */
-    private function get_file_use_data($file) {
+    private function is_file_used_data($file) {
         // File areas = intro, content.
         global $DB;
         if ($file->filearea === 'content') {
             $sql = 'SELECT * FROM {data_content} dc
-                            JOIN {data_fields} df ON df.id = dc.fieldid
-                            WHERE dc.id = ?';
+                    JOIN {data_fields} df ON df.id = dc.fieldid
+                    WHERE dc.id = ?';
             $data = $DB->get_record_sql($sql, [$file->itemid]);
             if ($data->type !== 'textarea' ||
                 false !== strpos($data->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
@@ -713,102 +705,111 @@ class course_files {
     }
 
     /**
+     * Additional file used checks for the Feedback activity module
      * @param object $file
      * @return bool | null
      * @throws \dml_exception
      */
-    private function get_file_use_feedback($file) {
+    private function is_file_used_feedback($file) {
         // File areas = intro, item, page_after_submit.
         global $DB;
         if ($file->filearea === 'item') {
             $item = $DB->get_record('feedback_item', ['id' => $file->itemid]);
-            if (false !== strpos($item->presentation, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
+            $isused = $this->is_embedded_file_used($item, 'presentation', $file->filename);
+            return $isused;
         } else if ($file->filearea = 'page_after_submit') {
-            $sql = 'SELECT f.* FROM {feedback} f
-                    JOIN {course_modules} cm ON cm.instance = f.id
+            $sql = 'SELECT m.* FROM {feedback} m
+                    JOIN {course_modules} cm ON cm.instance = m.id
                     JOIN {context} ctx ON ctx.instanceid = cm.id
                     WHERE ctx.id = ?';
             $feedback = $DB->get_record_sql($sql, [$file->contextid]);
-            if (false !== strpos($feedback->page_after_submit, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
+            $isused = $this->is_embedded_file_used($feedback, 'page_after_submit', $file->filename);
+            return $isused;
         }
     }
 
     /**
-     * @param $file
+     * Additional file used checks for Folder resource module
      * @return bool
      */
-    private function get_file_use_folder($file) {
+    private function is_file_used_folder() {
         // File areas = intro, content.
         return true;
     }
 
     /**
+     * Additional file used checks for the Forum activity module
      * @param object $file
      * @return bool | null
      * @throws \dml_exception
      */
-    private function get_file_use_forum($file) {
+    private function is_file_used_forum($file) {
         // File areas = intro, post.
         global $DB;
         if ($file->filearea === 'post') {
             $post = $DB->get_record('forum_posts', ['id' => $file->itemid]);
-            if (false !== strpos($post->message, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
+            $isused = $this->is_embedded_file_used($post, 'forum_posts', $file->filename);
+            return $isused;
         } else if ($file->filearea === 'attachment') {
             return true;
         }
     }
 
     /**
+     * Additional file used checks for the H5P activity module
      * @param object $file
      * @return bool
      */
-    private function get_file_use_h5pactivity($file) {
+    private function is_file_used_h5pactivity() {
         // File areas = intro, package.
         return true;
     }
 
     /**
+     * Additional file used checks for the Page resource module
      * @param object file
      * @return bool | null
      * @throws \dml_exception
      */
-    private function get_file_use_page($file) {
+    private function is_file_used_page($file) {
         // File areas = intro, content.
         global $DB;
         if ($file->filearea === 'content') {
-            $sql = 'SELECT p.* FROM {page} p
-                    JOIN {course_modules} cm ON cm.instance = p.id
+            $sql = 'SELECT m.* FROM {page} m
+                    JOIN {course_modules} cm ON cm.instance = m.id
                     JOIN {context} ctx ON ctx.instanceid = cm.id
                     WHERE ctx.id = ?';
             $page = $DB->get_record_sql($sql, [$file->contextid]);
-            if (false !== strpos($page->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
+            $isused = $this->is_embedded_file_used($page, 'content', $file->filename);
+            return $isused;
         }
     }
 
     /**
-     * @param object $file
+     * Additional file used checks for the Resource module
      * @return bool
      */
-    private function get_file_use_resource($file) {
+    private function is_file_used_resource() {
         // File areas = intro, content.
         return true;
     }
+
+    /**
+     * Test if a file is embbeded in text
+     *
+     * @param object $record
+     * @param string $field
+     * @param string $filename
+     * @return bool|null
+     */
+    private function is_embedded_file_used($record, $field, $filename) {
+        if ($record) {
+            return is_int(strpos($record->$field, '@@PLUGINFILE@@/' . rawurlencode($filename)));
+        } else {
+            return null;
+        }
+    }
+
 
     /**
      * Creates the URL for the editor where the file is added
@@ -840,7 +841,7 @@ class course_files {
                 $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
                 break;
             default :
-                $isused = null;
+                $url = '';
         }
         return $url;
     }
