@@ -16,7 +16,12 @@
 
 namespace local_listcoursefiles;
 
-
+/**
+ * Class mimetypes
+ * @package local_listcoursefiles
+ * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class mimetypes {
     /**
      * Mapping of file types to possible mime types.
@@ -37,6 +42,9 @@ class mimetypes {
         'hvp' => array('application/zip.h5p'),
     );
 
+    /**
+     * mimetypes constructor.
+     */
     public function __construct() {
         self::check_config_mimetypes();
     }
@@ -61,6 +69,10 @@ class mimetypes {
         return $mimetype;
     }
 
+    /**
+     * Getter for mime types
+     * @return array|\string[][]
+     */
     public static function get_mime_types() {
         return self::$mimetypes;
     }

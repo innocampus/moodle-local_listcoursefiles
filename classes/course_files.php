@@ -228,7 +228,7 @@ class course_files {
     public function set_files_license($fileids, $license) {
         global $DB;
 
-        $licenses = self::get_available_licenses();
+        $licenses = licences::get_available_licenses();
         if (!isset($licenses[$license])) {
             throw new \moodle_exception('invalid_license', 'local_listcoursefiles');
         }

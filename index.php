@@ -92,7 +92,12 @@ $tpldata->download_allowed = $downloadallowed;
 $tpldata->license_select_html = html_writer::select($licenses, 'license');
 
 foreach ($filelist as $file) {
-    $tplfile = new \local_listcoursefiles\course_file($file);
+    $classname = '\local_listcoursefiles\components\\' . $file->component;
+    if (class_exists($classname)) {
+        $tplfile = new $classname($file);
+    } else {
+        $tplfile = new \local_listcoursefiles\course_file($file);
+    }
     $tpldata->files[] = $tplfile;
 }
 

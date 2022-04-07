@@ -16,7 +16,12 @@
 
 namespace local_listcoursefiles;
 
-
+/**
+ * Class licences
+ * @package local_listcoursefiles
+ * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class licences {
     /**
      * @var null
@@ -27,13 +32,13 @@ class licences {
      * @var null
      */
     static protected $licenscolors = null;
+
     /**
      * Remember licences as array
      *
      * @return array|null
      * @throws \coding_exception
      */
-
     public static function get_available_licenses() {
         global $CFG;
 
