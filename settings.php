@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/local/listcoursefiles/lib.php');
 
 if ($hassiteconfig) {
-    $licenses = local_listcoursefiles\course_files::get_available_licenses();
+    $licenses = local_listcoursefiles\licences::get_available_licenses();
     $licensenames = '';
     foreach ($licenses as $short => $full) {
         $licensenames .= "$full ($short), ";

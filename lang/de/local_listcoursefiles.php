@@ -38,6 +38,7 @@ $string['filetype_all'] = 'Alle Dateitypen';
 $string['filetype_archive'] = 'Archiv';
 $string['filetype_audio'] = 'Audio';
 $string['filetype_document'] = 'Textdokument';
+$string['filetype_hvp'] = 'H5P Archiv';
 $string['filetype_image'] = 'Bild';
 $string['filetype_other'] = 'Andere';
 $string['filetype_video'] = 'Video';

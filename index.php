@@ -56,7 +56,6 @@ require_capability('local/listcoursefiles:view', $context);
 $changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
 $downloadallowed = has_capability('local/listcoursefiles:download', $context);
 
-local_listcoursefiles\course_files::check_config_mimetypes();
 $files = new local_listcoursefiles\course_files($courseid, $context, $component, $filetype);
 
 if ($action === 'change_license' && $changelicenseallowed) {
@@ -77,7 +76,7 @@ if ($action === 'change_license' && $changelicenseallowed) {
 }
 
 $filelist = $files->get_file_list($page * $limit, $limit);
-$licenses = local_listcoursefiles\course_files::get_available_licenses();
+$licenses = local_listcoursefiles\licences::get_available_licenses();
 
 $tpldata = new stdClass();
 $tpldata->course_selection_html = local_listcoursefiles_get_course_selection($url, $courseid);
@@ -93,34 +92,7 @@ $tpldata->download_allowed = $downloadallowed;
 $tpldata->license_select_html = html_writer::select($licenses, 'license');
 
 foreach ($filelist as $file) {
-    $tplfile = new stdClass();
-
-    $tplfile->file_license = local_listcoursefiles\course_files::get_license_name_color($file->license);
-    $tplfile->file_id = $file->id;
-    $tplfile->file_size = display_size($file->filesize);
-    $tplfile->file_type = local_listcoursefiles\course_files::get_file_type_translation($file->mimetype);
-    $tplfile->file_uploader = fullname($file);
-    $tplfile->file_expired = !$files->check_mimetype_license_expiry_date($file);
-
-    $fileurl = $files->get_file_download_url($file);
-    $tplfile->file_url = ($fileurl) ? $fileurl->out() : false;
-    $tplfile->file_name = $file->filename;
-
-    $componenturl = $files->get_component_url($file);
-    $tplfile->file_component_url = ($componenturl) ? $componenturl->out() : false;
-    $tplfile->file_component = local_listcoursefiles_get_component_translation($file->component);
-
-    $isused = $files->is_file_used($file, $courseid);
-
-    if ($isused === true) {
-        $tplfile->file_used = get_string('yes', 'core');
-    } else if ($isused === false) {
-        $tplfile->file_used = get_string('no', 'core');
-    } else {
-        $tplfile->file_used = get_string('nottested', 'local_listcoursefiles');
-    }
-
-    $tplfile->file_editurl = $files->get_edit_url($file, $courseid);
+    $tplfile = new \local_listcoursefiles\course_file($file);
     $tpldata->files[] = $tplfile;
 }
 
