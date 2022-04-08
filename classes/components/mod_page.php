@@ -21,12 +21,15 @@ use local_listcoursefiles\course_file;
 /**
  * Class mod_page
  * @package local_listcoursefiles
+ * @author Jeremy FitzPatrick
+ * @copyright 2022 Te Wānanga o Aotearoa
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_page extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param array $file
+     * @param object $file
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
@@ -36,6 +39,30 @@ class mod_page extends course_file {
         } else {
             return parent::get_file_download_url($file);
         }
+    }
+
+    /**
+     * Creates the URL for the editor where the file is added
+     *
+     * @param object $file
+     * @return \moodle_url|string
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
+    public function get_edit_url($file) {
+        global $DB;
+        $url = '';
+        if ($file->filearea === 'content') { // Just checking description for now.
+            $sql = 'SELECT cm.* FROM {context} ctx
+                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                        WHERE ctx.id = ?';
+            $mod = $DB->get_record_sql($sql, [$file->contextid]);
+            $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+        } else {
+            $url = parent::get_edit_url($file);
+        }
+
+        return $url->out(false);
     }
 
     /**

@@ -20,6 +20,7 @@ namespace local_listcoursefiles;
  * Class licences
  * @package local_listcoursefiles
  * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @author Jeremy FitzPatrick
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class licences {

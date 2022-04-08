@@ -34,7 +34,7 @@ if ($page < 0) {
 if ($limit < 1 || $limit > LOCAL_LISTCOURSEFILES_MAX_FILES) {
     $limit = LOCAL_LISTCOURSEFILES_MAX_FILES;
 }
-$component = optional_param('component', 'all_wo_submissions', PARAM_ALPHAEXT);
+$component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 $chosenfiles = optional_param_array('file', array(), PARAM_INT);

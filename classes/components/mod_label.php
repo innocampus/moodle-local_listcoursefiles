@@ -19,13 +19,13 @@ namespace local_listcoursefiles\components;
 use local_listcoursefiles\course_file;
 
 /**
- * Class contentbank
+ * Class mod_label
  * @package local_listcoursefiles
  * @author Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class contentbank extends course_file {
+class mod_label extends course_file {
     /**
      * Try to get the download url for a file.
      *
@@ -34,7 +34,7 @@ class contentbank extends course_file {
      */
     public function get_file_download_url($file) {
         return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-            $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+            $file->filearea . '/' . $file->filepath . $file->filename);
     }
 
     /**
@@ -45,16 +45,11 @@ class contentbank extends course_file {
      * @throws moodle_exception
      */
     public function get_component_url($file) {
-        return new \moodle_url('/contentbank/index.php', ['contextid' => $file->contextid]);
-    }
-
-    /**
-     * Not checking content bank
-     *
-     * @param object $file
-     * @return null
-     */
-    public function is_file_used($file) {
-        return null;
+        global $DB;
+        $sql = 'SELECT cm.* FROM {context} ctx
+                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                            WHERE ctx.id = ?';
+        $mod = $DB->get_record_sql($sql, [$file->contextid]);
+        return new \moodle_url('/course/view.php', ['id' => $mod->course, 'sectionid' => $mod->section]);
     }
 }

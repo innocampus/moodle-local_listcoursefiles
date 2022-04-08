@@ -21,12 +21,15 @@ use local_listcoursefiles\course_file;
 /**
  * Class mod_data
  * @package local_listcoursefiles
+ * @author Jeremy FitzPatrick
+ * @copyright 2022 Te Wānanga o Aotearoa
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_data extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param array $file
+     * @param object $file
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {

@@ -20,7 +20,7 @@ namespace local_listcoursefiles;
  * Class course_file
  * @package local_listcoursefiles
  * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @copyright 2022 Jeremy FitzPatrick
+ * @author     Jeremy FitzPatrick
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_file {
@@ -114,7 +114,7 @@ class course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param array $file
+     * @param object $file
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {

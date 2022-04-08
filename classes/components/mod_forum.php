@@ -21,8 +21,28 @@ use local_listcoursefiles\course_file;
 /**
  * Class mod_forum
  * @package local_listcoursefiles
+ * @author Jeremy FitzPatrick
+ * @copyright 2022 Te Wānanga o Aotearoa
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_forum extends course_file {
+    /**
+     * Try to get the download url for a file.
+     *
+     * @param object $file
+     * @return null|\moodle_url
+     */
+    public function get_file_download_url($file) {
+        if ($file->filearea === 'post') {
+            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+        } else if ($file->filearea === 'attachment') {
+            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+        } else {
+            return parent::get_file_download_url($file);
+        }
+    }
     /**
      * Checks if embedded files have been used
      *
