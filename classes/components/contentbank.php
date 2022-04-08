@@ -19,10 +19,10 @@ namespace local_listcoursefiles\components;
 use local_listcoursefiles\course_file;
 
 /**
- * Class mod_data
+ * Class contentbank
  * @package local_listcoursefiles
  */
-class mod_data extends course_file {
+class contentbank extends course_file {
     /**
      * Try to get the download url for a file.
      *
@@ -30,36 +30,28 @@ class mod_data extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        if ($file->filearea == 'content') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
-        } else {
-            return parent::get_file_download_url($file);
-        }
+        return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+            $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
     }
 
     /**
-     * Checks if embedded files have been used
+     * Try to get the url for the component (module or course).
      *
      * @param object $file
-     * @return bool
+     * @return null|\moodle_url
+     * @throws moodle_exception
+     */
+    public function get_component_url($file) {
+        return new \moodle_url('/contentbank/index.php', ['contextid' => $file->contextid]);
+    }
+
+    /**
+     * Not checking content bank
+     *
+     * @param object file
+     * @return null
      */
     public function is_file_used($file) {
-        // File areas = intro, content.
-        global $DB;
-        if ($file->filearea === 'content') {
-            $sql = 'SELECT * FROM {data_content} dc
-                    JOIN {data_fields} df ON df.id = dc.fieldid
-                    WHERE dc.id = ?';
-            $data = $DB->get_record_sql($sql, [$file->itemid]);
-            if ($data->type !== 'textarea' ||
-                false !== strpos($data->content, '@@PLUGINFILE@@/' . rawurlencode($file->filename))) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return parent::is_file_used($file);
-        }
+        return null;
     }
 }

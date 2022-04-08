@@ -20,42 +20,16 @@ use local_listcoursefiles\course_file;
 
 /**
  * Class mod_forum
- * @package local_listcoursefiles\components
+ * @package local_listcoursefiles
  */
 class mod_forum extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @param array $file
-     * @return null|\moodle_url
-     */
-    public function get_file_download_url($file) {
-        if ($file->filearea == 'intro') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->filepath . $file->filename);
-        }
-
-        return null;
-    }
-
-    public function get_edit_url($file) {
-        global $DB;
-        $url = '';
-        if ($file->filearea === 'intro') { // Just checking description for now.
-            $url = parent::get_edit_url($file);
-        }
-
-        return $url;
-    }
-
     /**
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         // File areas = intro, post.
         global $DB;
         if ($file->filearea === 'post') {
@@ -65,7 +39,7 @@ class mod_forum extends course_file {
         } else if ($file->filearea === 'attachment') {
             return true;
         } else {
-            return parent::is_file_used($file, $courseid);
+            return parent::is_file_used($file);
         }
     }
 }

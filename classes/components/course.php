@@ -20,7 +20,7 @@ use local_listcoursefiles\course_file;
 
 /**
  * Class course
- * @package local_listcoursefiles\components
+ * @package local_listcoursefiles
  */
 class course extends course_file {
     /**
@@ -30,17 +30,19 @@ class course extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        switch ($file->component . '#' . $file->filearea) {
-
-            case 'course#section':
+        switch ($file->filearea) {
+            case 'section':
                 return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
                     $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
-
-            case 'course#legacy':
+            case 'legacy':
                 return new \moodle_url('/file.php/' . $this->courseid . $file->filepath . $file->filename);
+            case 'overviewfiles':
+                return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+                    $file->filearea . '/' . $file->filepath . $file->filename);
+            default :
+                return parent::get_file_download_url($file);
         }
 
-        return null;
     }
 
     /**
@@ -65,6 +67,11 @@ class course extends course_file {
         }
     }
 
+    /**
+     * @param object $file
+     * @return \moodle_url
+     * @throws \moodle_exception
+     */
     public function get_edit_url($file) {
         if ($file->filearea === 'section') {
             $url = new \moodle_url('/course/editsection.php?', ['id' => $file->itemid]);
@@ -79,11 +86,10 @@ class course extends course_file {
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      * @throws \dml_exception
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         global $DB;
 
         if ($file->filearea === 'section') {
@@ -92,7 +98,7 @@ class course extends course_file {
         } else if ($file->filearea === 'overviewfiles') {
             $isused = true;
         } else if ($file->filearea === 'summary') {
-            $course = $DB->get_record('course', ['id' => $courseid]);
+            $course = $DB->get_record('course', ['id' => $this->courseid]);
             $isused = $this->is_embedded_file_used($course, 'summary', $file->filename);
         }
 

@@ -118,8 +118,10 @@ class course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-            $file->filearea . '/0' . $file->filepath . $file->filename);
+        if ($file->filearea == 'intro') {
+            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+                $file->filearea . '/0' . $file->filepath . $file->filename);
+        }
     }
 
     /**
@@ -131,12 +133,9 @@ class course_file {
      */
     public function get_component_url($file) {
         if ($file->contextlevel == CONTEXT_MODULE) {
+            $this->coursemodinfo = get_fast_modinfo($this->courseid);
             if (!empty($this->coursemodinfo->cms[$file->instanceid])) {
                 return $this->coursemodinfo->cms[$file->instanceid]->url;
-            }
-        } else if ($file->contextlevel == CONTEXT_COURSE) {
-            if ($file->component === 'contentbank') {
-                return new \moodle_url('/contentbank/index.php', ['contextid' => $file->contextid]);
             }
         }
 
@@ -147,20 +146,15 @@ class course_file {
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      * @throws \dml_exception
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         global $DB;
         $isused = false;
         $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
 
         switch ($component) {
-            case 'contentbank' :
-                $isused = null;
-                break;
-
             case 'mod' : // Course module.
                 $modname = str_replace('mod_', '', $file->component);
                 if ($file->filearea === 'intro') {
@@ -216,7 +210,6 @@ class course_file {
         $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
 
         switch ($component) {
-
             case 'mod' :
                 if ($file->filearea === 'intro') { // Just checking description for now.
                     $sql = 'SELECT cm.* FROM {context} ctx

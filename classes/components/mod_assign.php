@@ -20,7 +20,7 @@ use local_listcoursefiles\course_file;
 
 /**
  * Class mod_assign
- * @package local_listcoursefiles\components
+ * @package local_listcoursefiles
  */
 class mod_assign extends course_file {
     /**
@@ -30,23 +30,32 @@ class mod_assign extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        if ($file->filearea == 'intro') {
+        if ($file->filearea == 'introattachment') {
             return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->filepath . $file->filename);
+                $file->filearea . '/0/' . $file->filepath . $file->filename);
+        } else {
+            return parent::get_file_download_url($file);
         }
 
-        return null;
     }
 
+    /**
+     * @param object $file
+     * @return \moodle_url|string
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
     public function get_edit_url($file) {
         global $DB;
         $url = '';
-        if ($file->filearea === 'intro') { // Just checking description for now.
+        if ($file->filearea === 'introattachment') {
             $sql = 'SELECT cm.* FROM {context} ctx
                         JOIN {course_modules} cm ON cm.id = ctx.instanceid
                         WHERE ctx.id = ?';
             $mod = $DB->get_record_sql($sql, [$file->contextid]);
             $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+        } else {
+            $url = parent::get_edit_url($file);
         }
 
         return $url;
@@ -56,15 +65,14 @@ class mod_assign extends course_file {
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         // File areas = intro, introattachment.
         if ($file->filearea === 'introattachment') {
             return true;
         } else {
-            return parent::is_file_used($file, $courseid);
+            return parent::is_file_used($file);
         }
     }
 }

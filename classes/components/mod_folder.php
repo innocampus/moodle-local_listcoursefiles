@@ -20,7 +20,7 @@ use local_listcoursefiles\course_file;
 
 /**
  * Class mod_folder
- * @package local_listcoursefiles\components
+ * @package local_listcoursefiles
  */
 class mod_folder extends course_file {
     /**
@@ -30,34 +30,26 @@ class mod_folder extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-            $file->filearea . '/' . $file->filepath . $file->filename);
-    }
-
-    public function get_edit_url($file) {
-        global $DB;
-        $url = '';
-        if ($file->filearea === 'intro') { // Just checking description for now.
-            $url = parent::get_edit_url($file);
+        if ($file->filearea === 'content') {
+            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
+                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+        } else {
+            return parent::get_file_download_url($file);
         }
-
-        return $url;
     }
 
     /**
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         // File areas = intro, content.
-        global $DB;
         if ($file->filearea === 'content') {
                 return true;
         } else {
-            return parent::is_file_used($file, $courseid);
+            return parent::is_file_used($file);
         }
     }
 }

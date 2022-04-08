@@ -19,49 +19,22 @@ namespace local_listcoursefiles\components;
 use local_listcoursefiles\course_file;
 
 /**
- * Class mod_h5Pactivity
- * @package local_listcoursefiles\components
+ * Class mod_h5pactivity
+ * @package local_listcoursefiles
  */
-class mod_h5Pactivity extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @param array $file
-     * @return null|\moodle_url
-     */
-    public function get_file_download_url($file) {
-        if ($file->filearea == 'intro') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->filepath . $file->filename);
-        }
-
-        return null;
-    }
-
-    public function get_edit_url($file) {
-        global $DB;
-        $url = '';
-        if ($file->filearea === 'intro') { // Just checking description for now.
-            $url = parent::get_edit_url($file);
-        }
-
-        return $url;
-    }
-
+class mod_h5pactivity extends course_file {
     /**
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         // File areas = intro, package.
-        global $DB;
         if ($file->filearea === 'package') {
             return true;
         } else {
-            return parent::is_file_used($file, $courseid);
+            return parent::is_file_used($file);
         }
     }
 }

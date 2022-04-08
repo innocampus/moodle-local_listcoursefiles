@@ -20,7 +20,7 @@ use local_listcoursefiles\course_file;
 
 /**
  * Class mod_book
- * @package local_listcoursefiles\components
+ * @package local_listcoursefiles
  */
 class mod_book extends course_file {
     /**
@@ -30,32 +30,40 @@ class mod_book extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        if ($file->filearea == 'intro') {
+        if ($file->filearea == 'chapter') {
             return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->filepath . $file->filename);
+                $file->filearea . '/' . $file->itemid . '/' . $file->filepath . $file->filename);
+        } else {
+            return parent::get_file_download_url($file);
         }
-
-        return null;
     }
 
+    /**
+     * @param object $file
+     * @return \moodle_url|string
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
     public function get_edit_url($file) {
         global $DB;
         $url = '';
-        if ($file->filearea === 'intro') { // Just checking description for now.
+        if ($file->filearea === 'chapter') { // Just checking description for now.
+            $ctx = $DB->get_record('context', ['id' => $file->contextid]);
+            $url = new \moodle_url('/mod/book/edit.php', ['cmid' => $ctx->instanceid, 'id' => $file->itemid]);
+        } else {
             $url = parent::get_edit_url($file);
         }
 
-        return $url;
+        return $url->out(false);
     }
 
     /**
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @param integer $courseid
      * @return bool
      */
-    public function is_file_used($file, $courseid) {
+    public function is_file_used($file) {
         // File areas = intro, chapter.
         global $DB;
         if ($file->filearea === 'chapter') {
@@ -63,7 +71,7 @@ class mod_book extends course_file {
             $isused = $this->is_embedded_file_used($chapter, 'content', $file->filename);
             return $isused;
         } else {
-            return parent::is_file_used($file, $courseid);
+            return parent::is_file_used($file);
         }
     }
 }
