@@ -157,7 +157,7 @@ class course_files {
         if (is_array($types)) {
             $list = array();
             foreach ($types as $type) {
-                $list = array_merge($list, self::$mimetypes[$type]);
+                $list = array_merge($list, mimetypes::get_mime_types()[$type]);
             }
         } else {
             $list = &mimetypes::get_mime_types()[$types];

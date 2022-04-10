@@ -27,6 +27,17 @@ use local_listcoursefiles\course_file;
  */
 class contentbank extends course_file {
     /**
+     * @param object $file
+     * @return string
+     * @throws \dml_exception
+     */
+    protected function get_displayed_filename($file) {
+        global $DB;
+        $cb = $DB->get_record('contentbank_content', ['id' => $file->itemid]);
+        return $cb->name;
+    }
+
+    /**
      * Try to get the download url for a file.
      *
      * @param object $file

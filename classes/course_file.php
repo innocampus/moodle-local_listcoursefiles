@@ -48,13 +48,13 @@ class course_file {
 
         $fileurl = $this->get_file_download_url($file);
         $this->file_url = ($fileurl) ? $fileurl->out() : false;
-        $this->file_name = $file->filename;
+        $this->file_name = $this->get_displayed_filename($file);
 
         $componenturl = $this->get_component_url($file);
         $this->file_component_url = ($componenturl) ? $componenturl->out() : false;
         $this->file_component = local_listcoursefiles_get_component_translation($file->component);
 
-        $isused = $this->is_file_used($file, $COURSE->id);
+        $isused = $this->is_file_used($file);
 
         if ($isused === true) {
             $this->file_used = get_string('yes', 'core');
@@ -65,6 +65,15 @@ class course_file {
         }
 
         $this->file_editurl = $this->get_edit_url($file);
+    }
+
+    /**
+     * Getter for filename
+     * @param object $file
+     * @return string
+     */
+    protected function get_displayed_filename($file) {
+        return $file->filename;
     }
 
     /**
