@@ -27,6 +27,8 @@ use local_listcoursefiles\course_file;
  */
 class contentbank extends course_file {
     /**
+     * Show the name of the file as it appears in content bank
+     *
      * @param object $file
      * @return string
      * @throws \dml_exception
@@ -66,6 +68,9 @@ class contentbank extends course_file {
      * @return null
      */
     public function is_file_used($file) {
-        return null;
+        $fs = new \file_storage();
+        $f = new \stored_file($fs, $file);
+
+        return $fs->get_references_count_by_storedfile($f) > 1;
     }
 }
