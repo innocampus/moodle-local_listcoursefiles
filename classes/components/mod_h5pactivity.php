@@ -30,13 +30,13 @@ class mod_h5pactivity extends course_file {
      * Creates the URL for the editor where the file is added
      *
      * @param object $file
-     * @return \moodle_url|string
+     * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
     public function get_edit_url($file) {
         global $DB;
-        $url = '';
+        $url = null;
         if ($file->filearea === 'package') {
             $sql = 'SELECT cm.* FROM {context} ctx
                         JOIN {course_modules} cm ON cm.id = ctx.instanceid
@@ -47,7 +47,7 @@ class mod_h5pactivity extends course_file {
             $url = parent::get_edit_url($file);
         }
 
-        return $url->out(false);
+        return $url;
     }
 
     /**

@@ -45,13 +45,13 @@ class mod_book extends course_file {
      * Creates the URL for the editor where the file is added
      *
      * @param object $file
-     * @return \moodle_url|string
+     * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
     public function get_edit_url($file) {
         global $DB;
-        $url = '';
+        $url = null;
         if ($file->filearea === 'chapter') { // Just checking description for now.
             $ctx = $DB->get_record('context', ['id' => $file->contextid]);
             $url = new \moodle_url('/mod/book/edit.php', ['cmid' => $ctx->instanceid, 'id' => $file->itemid]);
@@ -59,7 +59,7 @@ class mod_book extends course_file {
             $url = parent::get_edit_url($file);
         }
 
-        return $url->out(false);
+        return $url;
     }
 
     /**

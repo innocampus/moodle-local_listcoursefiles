@@ -25,9 +25,71 @@ namespace local_listcoursefiles;
  */
 class course_file {
     /**
-     * @var
+     * @var int
      */
     protected $courseid = 0;
+
+    /* Properties used by the template. */
+    /**
+     * @var int
+     */
+    public $fileid = 0;
+
+    /**
+     * @var string
+     */
+    public $filelicense = '';
+
+    /**
+     * @var string Friendly readable size of the file (MB or kB as appropriate)
+     */
+    public $filesize = '';
+
+    /**
+     * @var string
+     */
+    public $filetype = '';
+
+    /**
+     * @var string The name of the person who uploaded the file.
+     */
+    public $fileuploader = '';
+
+    /**
+     * @var bool Is the license expired?
+     */
+    public $fileexpired = false;
+
+    /**
+     * @var false|string
+     */
+    public $fileurl = false;
+
+    /**
+     * @var string
+     */
+    public $filename = '';
+
+    /**
+     * @var false|string A link to the page where the file is used.
+     */
+    public $filecomponenturl = false;
+
+    /**
+     * @var string
+     */
+    public $filecomponent;
+
+    /**
+     * @var string|false A link to the page with the editor where the file was added.
+     */
+    public $fileediturl = false;
+
+    /**
+     * @var string A message stating if the file is used or unknown.
+     */
+    public $fileused;
+
 
     /**
      * course_file constructor.
@@ -39,32 +101,33 @@ class course_file {
     public function __construct($file) {
         global $COURSE;
         $this->courseid = $COURSE->id;
-        $this->file_license = licences::get_license_name_color($file->license);
-        $this->file_id = $file->id;
-        $this->file_size = display_size($file->filesize);
-        $this->file_type = mimetypes::get_file_type_translation($file->mimetype);
-        $this->file_uploader = fullname($file);
-        $this->file_expired = !$this->check_mimetype_license_expiry_date($file);
+        $this->filelicense = licences::get_license_name_color($file->license);
+        $this->fileid = $file->id;
+        $this->filesize = display_size($file->filesize);
+        $this->filetype = mimetypes::get_file_type_translation($file->mimetype);
+        $this->fileuploader = fullname($file);
+        $this->fileexpired = !$this->check_mimetype_license_expiry_date($file);
 
         $fileurl = $this->get_file_download_url($file);
-        $this->file_url = ($fileurl) ? $fileurl->out() : false;
-        $this->file_name = $this->get_displayed_filename($file);
+        $this->fileurl = ($fileurl) ? $fileurl->out() : false;
+        $this->filename = $this->get_displayed_filename($file);
 
         $componenturl = $this->get_component_url($file);
-        $this->file_component_url = ($componenturl) ? $componenturl->out() : false;
-        $this->file_component = local_listcoursefiles_get_component_translation($file->component);
+        $this->filecomponenturl = ($componenturl) ? $componenturl->out() : false;
+        $this->filecomponent = local_listcoursefiles_get_component_translation($file->component);
 
         $isused = $this->is_file_used($file);
 
         if ($isused === true) {
-            $this->file_used = get_string('yes', 'core');
+            $this->fileused = get_string('yes', 'core');
         } else if ($isused === false) {
-            $this->file_used = get_string('no', 'core');
+            $this->fileused = get_string('no', 'core');
         } else {
-            $this->file_used = get_string('nottested', 'local_listcoursefiles');
+            $this->fileused = get_string('nottested', 'local_listcoursefiles');
         }
 
-        $this->file_editurl = $this->get_edit_url($file);
+        $editurl = $this->get_edit_url($file);
+        $this->fileediturl = ($editurl) ? $editurl->out(false) : false;
     }
 
     /**
@@ -94,7 +157,7 @@ class course_file {
      * @param stdClass $file
      * @return boolean whether file is allowed to be delivered to students
      */
-    public function check_mimetype_license_expiry_date($file) {
+    protected function check_mimetype_license_expiry_date($file) {
         global $CFG, $COURSE;
 
         // Check if enabled/configured.
@@ -126,11 +189,12 @@ class course_file {
      * @param object $file
      * @return null|\moodle_url
      */
-    public function get_file_download_url($file) {
+    protected function get_file_download_url($file) {
         if ($file->filearea == 'intro') {
             return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
                 $file->filearea . '/0' . $file->filepath . $file->filename);
         }
+        return null;
     }
 
     /**
@@ -140,7 +204,7 @@ class course_file {
      * @return null|\moodle_url
      * @throws moodle_exception
      */
-    public function get_component_url($file) {
+    protected function get_component_url($file) {
         if ($file->contextlevel == CONTEXT_MODULE) {
             $this->coursemodinfo = get_fast_modinfo($this->courseid);
             if (!empty($this->coursemodinfo->cms[$file->instanceid])) {
@@ -158,7 +222,7 @@ class course_file {
      * @return bool
      * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used($file) {
         global $DB;
         $isused = false;
         $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
@@ -209,13 +273,13 @@ class course_file {
      * Creates the URL for the editor where the file is added
      *
      * @param object $file
-     * @return \moodle_url|string
+     * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function get_edit_url($file) {
+    protected function get_edit_url($file) {
         global $DB;
-        $url = '';
+        $url = null;
         $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
 
         switch ($component) {
@@ -231,10 +295,9 @@ class course_file {
             case 'question' :
             case 'qtype_essay' :
                 $url = new \moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $file->itemid]);
-                $url = $url->out(false);
                 break;
             default :
-                $url = '';
+                $url = null;
         }
         return $url;
     }
