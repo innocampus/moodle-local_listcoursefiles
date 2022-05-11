@@ -74,24 +74,24 @@ class course extends course_file {
      * Creates the URL for the editor where the file is added
      *
      * @param object $file
-     * @return \moodle_url
+     * @return \moodle_url|null
      * @throws \moodle_exception
      */
     public function get_edit_url($file) {
         if ($file->filearea === 'section') {
-            $url = new \moodle_url('/course/editsection.php?', ['id' => $file->itemid]);
+            return new \moodle_url('/course/editsection.php?', ['id' => $file->itemid]);
         } else if ($file->filearea === 'overviewfiles' || $file->filearea === 'summary') {
-            $url = new \moodle_url('/course/edit.php?', ['id' => $this->courseid]);
+            return new \moodle_url('/course/edit.php?', ['id' => $this->courseid]);
         }
 
-        return $url;
+        return parent::get_edit_url($file);
     }
 
     /**
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @return bool
+     * @return bool|null
      * @throws \dml_exception
      */
     public function is_file_used($file) {
@@ -99,14 +99,14 @@ class course extends course_file {
 
         if ($file->filearea === 'section') {
             $section = $DB->get_record('course_sections', ['id' => $file->itemid]);
-            $isused = $this->is_embedded_file_used($section, 'summary', $file->filename);
+            return $this->is_embedded_file_used($section, 'summary', $file->filename);
         } else if ($file->filearea === 'overviewfiles') {
-            $isused = true;
+            return true;
         } else if ($file->filearea === 'summary') {
             $course = $DB->get_record('course', ['id' => $this->courseid]);
-            $isused = $this->is_embedded_file_used($course, 'summary', $file->filename);
+            return $this->is_embedded_file_used($course, 'summary', $file->filename);
         }
 
-        return $isused;
+        return parent::is_file_used($file);
     }
 }

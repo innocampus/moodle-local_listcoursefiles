@@ -219,12 +219,12 @@ class course_file {
      * Checks if embedded files have been used
      *
      * @param object $file
-     * @return bool
+     * @return bool|null
      * @throws \dml_exception
      */
     protected function is_file_used($file) {
         global $DB;
-        $isused = false;
+        $isused = null;
         $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
 
         switch ($component) {
