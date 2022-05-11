@@ -14,6 +14,51 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
+{{!
+    @template local_listcoursefiles/view
+
+    List course files layout template.
+
+    Context variables required for this template:
+    * course_selection_html    - HTML snippet for course select drop-down menu
+    * component_selection_html - HTML snippet for file component select drop-down menu
+    * file_type_selection_html - HTML snippet for file type select drop-down menu
+    * paging_bar_html          - HTML paging bar snippet from OUTPUT
+    * url                      - Form post URL
+    * sesskey                  - Sesskey string
+    * files                    - array of files.
+    * files_exist              - boolean
+    * change_license_allowed   - boolean, can the user change the file license
+    * download_allowed         - boolean, can the user download files
+    * license_select_html      - HTML snippet for license select drop-down menu
+
+    Example context (json):
+    {
+        "course_selection_html"    : "",
+        "component_selection_html" : "",
+        "file_type_selection_html" : "",
+        "paging_bar_html"          : "",
+        "url"                      : "https://mymoodle.invalid/local/listcoursefiles/index.php?courseid=34",
+        "sesskey"                  : "lDMLz7xAGt",
+        "files"                    : [{
+                                        "fileexpired"      : 0,
+                                        "filename"         : "my_picture.png",
+                                        "fileurl"          : "",
+                                        "filesize"         : "516.1KB",
+                                        "filecomponent"    : "Course",
+                                        "filecomponenturl" : "",
+                                        "filetype"         : "Image",
+                                        "filelicense"      : "Creative Commons - NoDerivs",
+                                        "fileuploader"     : "Admin User",
+                                        "fileused"         : "Yes"
+                                     }],
+        "files_exist"              : 3,
+        "change_license_allowed"   : 1,
+        "download_allowed"         : 1,
+        "license_select_html"      : ""
+    }
+
+}}
 <div class="local_listcoursefiles_menu">
     <div class="local_listcoursefiles_selection">
         {{#str}}mycourses{{/str}}: {{{course_selection_html}}}
@@ -37,7 +82,7 @@
     <form action="{{{url}}}" method="post" id="filelist">
     <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
 
-    <table align="center" class="local_listcoursefiles_table generaltable">
+    <table class="local_listcoursefiles_table generaltable">
         <thead>
             <tr>
                 <th class="header c0" scope="col"></th>
@@ -46,40 +91,43 @@
                 <th class="header c3" scope="col">{{#str}}component,local_listcoursefiles{{/str}}</th>
                 <th class="header c4" scope="col">{{#str}}mimetype,local_listcoursefiles{{/str}}</th>
                 <th class="header c5" scope="col">{{#str}}license,local_listcoursefiles{{/str}}</th>
-                <th class="header c6 lastcol" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
+                <th class="header c6" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
+                <th class="header c7 lastcol" scope="col">{{#str}}used,local_listcoursefiles{{/str}}</th>
             </tr>
         </thead>
         <tbody>
         {{#files}}
             <tr>
                 <td class="cell c0" style="text-align:left;">
-                    <input type="checkbox" class="local_listcoursefiles_filecheckbox" name="file[{{file_id}}]" />
-                    {{#file_expired}}
+                    <input type="checkbox" class="local_listcoursefiles_filecheckbox" name="file[{{fileid}}]" />
+                    {{#fileexpired}}
                         <span class="local_listcoursefiles_file_expired">
                             {{#pix}}i/warning, core, {{#str}}file_expired,local_listcoursefiles{{/str}}{{/pix}}
                         </span>
-                    {{/file_expired}}
+                    {{/fileexpired}}
                 </td>
                 <td class="cell c1">
-                    {{#file_url}}
-                        <a href="{{{file_url}}}">{{file_name}}</a>
-                    {{/file_url}}
-                    {{^file_url}}
-                        {{file_name}}
-                    {{/file_url}}
+                    {{#fileurl}}
+                        <a href="{{{fileurl}}}">{{filename}}</a>
+                    {{/fileurl}}
+                    {{^fileurl}}
+                        {{filename}}
+                    {{/fileurl}}
                 </td>
-                <td class="cell c2">{{file_size}}</td>
+                <td class="cell c2">{{filesize}}</td>
                 <td class="cell c3">
-                    {{#file_component_url}}
-                        <a href="{{{file_component_url}}}">{{file_component}}</a>
-                    {{/file_component_url}}
-                    {{^file_component_url}}
-                        {{file_component}}
-                    {{/file_component_url}}
+                    {{#filecomponenturl}}
+                        <a href="{{{filecomponenturl}}}">{{filecomponent}}</a>
+                    {{/filecomponenturl}}
+                    {{^filecomponenturl}}
+                        {{filecomponent}}
+                    {{/filecomponenturl}}
+                    {{#fileediturl}}<a href="{{fileediturl}}"><i class="icon fa fa-cog fa-fw" aria-hidden="true"></i></a>{{/fileediturl}}
                 </td>
-                <td class="cell c4">{{file_type}}</td>
-                <td class="cell c5">{{{file_license}}}</td>
-                <td class="cell c6 lastcol">{{file_uploader}}</td>
+                <td class="cell c4">{{filetype}}</td>
+                <td class="cell c5">{{{filelicense}}}</td>
+                <td class="cell c6">{{fileuploader}}</td>
+                <td class="cell c7 lastcol"><span class="fileused">{{fileused}}</span></td>
             </tr>
         {{/files}}
     </table>
@@ -116,7 +164,7 @@
 {{#js}}
     require(['jquery'], function($) {
     var nextstatus = true;
-    $('.local_listcoursefiles_check_uncheck_all').click(function () {
+    $('.local_listcoursefiles_check_uncheck_all').click(function() {
         $('input:checkbox').prop('checked', nextstatus);
         nextstatus = !nextstatus;
     });

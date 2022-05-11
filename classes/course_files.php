@@ -24,8 +24,10 @@
 
 namespace local_listcoursefiles;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Class course_files
+ * @package local_listcoursefiles
+ */
 class course_files {
     /**
      * @var context
@@ -46,13 +48,15 @@ class course_files {
      * @var array
      */
     protected $filelist = null;
-    static protected $licenses = null;
-    static protected $licenscolors = null;
 
     /**
      * @var string
      */
     protected $filtercomponent;
+
+    /**
+     * @var string
+     */
     protected $filterfiletype;
 
     /**
@@ -66,23 +70,13 @@ class course_files {
     protected $courseid;
 
     /**
-     * Mapping of file types to possible mime types.
-     * @var array
+     * course_files constructor.
+     * @param integer $courseid
+     * @param \context $context
+     * @param string $component
+     * @param string $filetype
+     * @throws \moodle_exception
      */
-    static protected $mimetypes = array(
-        'document' => array('application/epub+zip', 'application/msword', 'application/pdf',
-            'application/postscript', 'application/vnd.ms-%', 'application/vnd.oasis.opendocument%',
-            'application/vnd.openxmlformats-officedocument%', 'application/vnd.sun.xml%',
-            'application/x-digidoc', 'application/xhtml+xml', 'application/x-javascript',
-            'application/x-latex', 'application/xml', 'application/x-ms%', 'application/x-tex%',
-            'document%', 'spreadsheet', 'text/%'),
-        'image' => array('image/%'),
-        'audio' => array('audio/%'),
-        'video' => array('video/%'),
-        'archive' => array('application/zip', 'application/x-tar', 'application/g-zip',
-            'application/x-rar-compressed', 'application/x-7z-compressed', 'application/vnd.moodle.backup'),
-    );
-
     public function __construct($courseid, \context $context, $component, $filetype) {
         $this->courseid = $courseid;
         $this->context = $context;
@@ -117,8 +111,8 @@ class course_files {
         }
 
         if ($this->filterfiletype === 'other') {
-            $sqlwhere .= ' AND ' . $this->get_sql_mimetype(array_keys(self::$mimetypes), false);
-        } else if (isset(self::$mimetypes[$this->filterfiletype])) {
+            $sqlwhere .= ' AND ' . $this->get_sql_mimetype(array_keys(mimetypes::get_mime_types()), false);
+        } else if (isset(mimetypes::get_mime_types()[$this->filterfiletype])) {
             $sqlwhere .= ' AND ' . $this->get_sql_mimetype($this->filterfiletype, true);
         }
 
@@ -152,14 +146,21 @@ class course_files {
         return $this->filelist;
     }
 
+    /**
+     * Creates an SQL snippet
+     *
+     * @param array $types
+     * @param boolean $in
+     * @return string
+     */
     protected function get_sql_mimetype($types, $in) {
         if (is_array($types)) {
             $list = array();
             foreach ($types as $type) {
-                $list = array_merge($list, self::$mimetypes[$type]);
+                $list = array_merge($list, mimetypes::get_mime_types()[$type]);
             }
         } else {
-            $list = &self::$mimetypes[$types];
+            $list = &mimetypes::get_mime_types()[$types];
         }
 
         if ($in) {
@@ -217,54 +218,17 @@ class course_files {
         return $this->components;
     }
 
-    public static function get_available_licenses() {
-        global $CFG;
-
-        if (self::$licenses === null) {
-            self::$licenses = array();
-            $a = explode(',', $CFG->licenses);
-            foreach ($a as $license) {
-                self::$licenses[$license] = \get_string($license, 'license');
-            }
-        }
-
-        return self::$licenses;
-    }
-
-    /**
-     *
-     * @param string short name of a license
-     * @return full name of the license with HTML
-     */
-    public static function get_license_name_color($licenseshort) {
-        if (self::$licenscolors === null) {
-            self::get_available_licenses();
-            $colorscfg = get_config('local_listcoursefiles', 'licensecolors');
-            $matches = array();
-            preg_match_all('@\s*(\S+)\s*([a-fA-F0-9]{6})\s*@', $colorscfg, $matches, PREG_SET_ORDER);
-            self::$licenscolors = array();
-            foreach ($matches as $m) {
-                self::$licenscolors[$m[1]] = $m[2];
-            }
-        }
-
-        $name = (isset(self::$licenses[$licenseshort])) ? self::$licenses[$licenseshort] : '';
-        if (isset(self::$licenscolors[$licenseshort])) {
-            $name = \html_writer::tag('span', $name, array('style' => 'background-color: #' . self::$licenscolors[$licenseshort]));
-        }
-        return $name;
-    }
-
     /**
      * Change the license of multiple files.
      *
      * @param array $fileids keys are the file IDs
      * @param string $license shortname of the license
+     * @throws moodle_exception
      */
     public function set_files_license($fileids, $license) {
         global $DB;
 
-        $licenses = self::get_available_licenses();
+        $licenses = licences::get_available_licenses();
         if (!isset($licenses[$license])) {
             throw new \moodle_exception('invalid_license', 'local_listcoursefiles');
         }
@@ -313,9 +277,9 @@ class course_files {
      *
      * The file objects need to have the contextid and the context path.
      *
-     * @param array files array of stdClass as retrieved from the files and context table
-     * @param bool returnfileids return file ids or objects
-     * @return file ids that belong to the context
+     * @param array $files array of stdClass as retrieved from the files and context table
+     * @param bool $returnfileids return file ids or objects
+     * @return array file ids that belong to the context
      */
     protected function check_files_context(&$files, $returnfileids = false) {
         $thiscontextpath = $this->context->path . '/';
@@ -337,6 +301,7 @@ class course_files {
      * This function does not return if the zip archive could be created.
      *
      * @param array $fileids file ids
+     * @throws moodle_exception
      */
     public function download_files(&$fileids) {
         global $DB, $CFG;
@@ -404,138 +369,18 @@ class course_files {
     }
 
     /**
-     * Try to get the url for the component (module or course).
+     * Collate an array of available file types
      *
-     * @param int contextlevel
-     * @param int instanceid
-     * @return null|moodle_url
+     * @return array
+     * @throws \coding_exception
      */
-    public function get_component_url($contextlevel, $instanceid) {
-        if ($contextlevel == CONTEXT_MODULE) {
-            if (!empty($this->coursemodinfo->cms[$instanceid])) {
-                return $this->coursemodinfo->cms[$instanceid]->url;
-            }
-        } else if ($contextlevel == CONTEXT_COURSE) {
-            return new \moodle_url('/course/view.php', array('id' => $this->courseid));
-        }
-
-        return null;
-    }
-
-    /**
-     * Try to get the download url for a file.
-     *
-     * @param array $file
-     * @return null|moodle_url
-     */
-    public function get_file_download_url($file) {
-        switch ($file->component . '#' . $file->filearea) {
-            case 'mod_folder#intro':
-            case 'mod_folder#content':
-            case 'mod_resource#intro':
-            case 'mod_resource#content':
-                return new \moodle_url('/pluginfile.php/'. $file->contextid . '/' . $file->component . '/' .
-                        $file->filearea . '/0' . $file->filepath . $file->filename);
-
-            case 'mod_assign#intro':
-            case 'mod_label#intro':
-                return new \moodle_url('/pluginfile.php/'. $file->contextid . '/' . $file->component . '/' .
-                        $file->filearea . '/' . $file->filepath . $file->filename);
-
-            case 'assignsubmission_file#submission_files':
-            case 'mod_assign#introattachment':
-            case 'mod_data#content':
-            case 'mod_forum#post':
-            case 'mod_forum#attachment':
-            case 'mod_page#content':
-            case 'mod_page#intro':
-            case 'mod_glossary#entry':
-            case 'mod_wiki#attachments':
-            case 'course#section':
-                return new \moodle_url('/pluginfile.php/'. $file->contextid . '/' . $file->component . '/' .
-                        $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
-
-            case 'course#legacy':
-                return new \moodle_url('/file.php/'. $this->courseid . $file->filepath . $file->filename);
-        }
-
-        return null;
-    }
-
-    /**
-     * Check if a file with a specific license has expired.
-     *
-     * This checks if a file has been expired because:
-     *  - it is a document (has a particular mimetype),
-     *  - has been provided under a specific license
-     *  - and the expiry date is exceed (in respect of the coure start date and the file creation time).
-     *
-     * The following settings need to be defined in the config.php:
-     *   array $CFG->fileexpirylicenses which licenses (shortnames) expire
-     *   int $CFG->fileexpirydate when do files expire (unix time)
-     *   array $CFG->filemimetypes['document'] mime types of documents
-     *
-     * These adjustments were made by Technische Universität Berlin in order to conform to § 52a UrhG.
-     *
-     * @param stdClass $file
-     * @return boolean whether file is allowed to be delivered to students
-     */
-    public function check_mimetype_license_expiry_date($file) {
-        global $CFG, $COURSE;
-
-        // Check if enabled/configured.
-        if (!isset($CFG->fileexpirydate, $CFG->fileexpirylicenses, $CFG->filemimetypes['document'])) {
-            return true;
-        }
-
-        if (in_array($file->license, $CFG->fileexpirylicenses)) {
-            $isdoc = false;
-            $fmimetype = $file->mimetype;
-            foreach ($CFG->filemimetypes['document'] as $mime) {
-                if ($mime === $fmimetype || (substr($mime, -1) === '%' && strncmp($mime, $fmimetype, strlen($mime) - 1) === 0)) {
-                    $isdoc = true;
-                    break;
-                }
-            }
-            $coursestart = isset($COURSE->startdate) ? $COURSE->startdate : 0;
-            if ($isdoc && $CFG->fileexpirydate > max($coursestart, $file->timecreated)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public static function get_file_types() {
         $types = array('all' => \get_string('filetype_all', 'local_listcoursefiles'));
-        foreach (self::$mimetypes as $type => $unused) {
+        foreach (mimetypes::get_mime_types() as $type => $unused) {
             $types[$type] = \get_string('filetype_' . $type, 'local_listcoursefiles');
         }
         $types['other'] = \get_string('filetype_other', 'local_listcoursefiles');
         return $types;
     }
 
-    public static function get_file_type_translation($mimetype) {
-        foreach (self::$mimetypes as $name => $types) {
-            foreach ($types as $mime) {
-                if ($mime === $mimetype ||
-                        (substr($mime, -1) === '%' && strncmp($mime, $mimetype, strlen($mime) - 1) === 0)) {
-                    return \get_string('filetype_' . $name, 'local_listcoursefiles');
-                }
-            }
-        }
-
-        return $mimetype;
-    }
-
-    /**
-     * Check if the predefined list of mimetypes should be overridden.
-     */
-    public static function check_config_mimetypes() {
-        global $CFG;
-
-        if (isset($CFG->filemimetypes)) {
-            self::$mimetypes = $CFG->filemimetypes;
-        }
-    }
 }

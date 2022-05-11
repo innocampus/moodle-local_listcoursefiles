@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_listcoursefiles\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The local_listcoursefiles license changed event class.
@@ -66,7 +65,7 @@ class license_changed extends \core\event\base {
      *
      * @return string legacy event name
      */
-    static public function get_legacy_eventname() {
+    public static function get_legacy_eventname() {
         return null;
     }
 

@@ -21,7 +21,6 @@
  * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Maximum number of files per page.
@@ -29,6 +28,13 @@ defined('MOODLE_INTERNAL') || die();
  */
 define('LOCAL_LISTCOURSEFILES_MAX_FILES', 500);
 
+/**
+ * Try to get the name of the file component in the user's lang
+ *
+ * @param string $name
+ * @return lang_string|string
+ * @throws coding_exception
+ */
 function local_listcoursefiles_get_component_translation($name) {
     $translated = $name;
     if (get_string_manager()->string_exists('pluginname', $name)) {
@@ -39,6 +45,14 @@ function local_listcoursefiles_get_component_translation($name) {
     return $translated;
 }
 
+/**
+ * Builds the course select drop-down menu HTNML snippet
+ *
+ * @param moodle_url $url
+ * @param integer $currentcourseid
+ * @return mixed
+ * @throws coding_exception
+ */
 function local_listcoursefiles_get_course_selection(moodle_url $url, $currentcourseid) {
     global $OUTPUT;
 
@@ -57,6 +71,14 @@ function local_listcoursefiles_get_course_selection(moodle_url $url, $currentcou
     return $OUTPUT->single_select($url, 'courseid', $availcourses, $currentcourseid, null, 'courseselector');
 }
 
+/**
+ * Builds the file component select drop-down menu HTNML snippet
+ *
+ * @param moodle_url $url
+ * @param array $allcomponents
+ * @param string $currentcomponent
+ * @return mixed
+ */
 function local_listcoursefiles_get_component_selection(moodle_url $url, $allcomponents, $currentcomponent) {
     global $OUTPUT;
 
@@ -66,6 +88,14 @@ function local_listcoursefiles_get_component_selection(moodle_url $url, $allcomp
     return $OUTPUT->single_select($url, 'component', $allcomponents, $currentcomponent, null, 'componentselector');
 }
 
+/**
+ * Builds the file type select drop-down menu HTNML snippet
+ *
+ * @param moodle_url $url
+ * @param string $currenttype
+ * @return mixed
+ * @throws coding_exception
+ */
 function local_listcoursefiles_get_file_type_selection(moodle_url $url, $currenttype) {
     global $OUTPUT;
 

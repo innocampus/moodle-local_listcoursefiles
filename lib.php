@@ -21,9 +21,15 @@
  * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-
+/**
+ * Adds link to Course administration
+ *
+ * @param settings_navigation $nav
+ * @param context $context
+ * @throws coding_exception
+ * @throws moodle_exception
+ */
 function local_listcoursefiles_extend_settings_navigation(settings_navigation $nav, $context) {
     if ($context && ($context instanceof context_course || $context instanceof context_module)) {
         if (has_capability('local/listcoursefiles:view', $context) && $course = $nav->get('courseadmin')) {
