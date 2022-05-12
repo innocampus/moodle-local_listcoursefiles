@@ -151,7 +151,7 @@ class course_files {
     /**
      * Creates an SQL snippet
      *
-     * @param $types
+     * @param mixed $types
      * @param boolean $in
      * @return string
      */
