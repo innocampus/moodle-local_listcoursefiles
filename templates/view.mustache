@@ -137,14 +137,14 @@
     <div class="local_listcoursefiles_files_actions">
         {{#download_allowed}}
             <div class="local_listcoursefiles_files_action">
-               <button type="submit" name="action" value="download">
+               <button class="btn btn-secondary" type="submit" name="action" value="download">
                     {{#str}}zip_download,local_listcoursefiles{{/str}}
                </button>
             </div>
         {{/download_allowed}}
         {{#change_license_allowed}}
             <div class="local_listcoursefiles_files_action">
-                <button type="submit" name="action" value="change_license">
+                <button class="btn btn-secondary" type="submit" name="action" value="change_license">
                     {{#str}}change_license,local_listcoursefiles{{/str}}
                 </button>
                 {{{license_select_html}}}
