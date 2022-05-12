@@ -30,7 +30,7 @@ namespace local_listcoursefiles;
  */
 class course_files {
     /**
-     * @var context
+     * @var \context
      */
     protected $context;
 
@@ -60,7 +60,7 @@ class course_files {
     protected $filterfiletype;
 
     /**
-     * @var course_modinfo
+     * @var \course_modinfo
      */
     protected $coursemodinfo;
 
@@ -116,7 +116,9 @@ class course_files {
             $sqlwhere .= ' AND ' . $this->get_sql_mimetype($this->filterfiletype, true);
         }
 
-        $usernamefields = get_all_user_name_fields(true, 'u');
+        $usernameselect = implode(', ', array_map(function($field) {
+            return 'u.' . $field;
+        }, \core_user\fields::get_name_fields()));
 
         $sql = 'FROM {files} f
                 LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -124,7 +126,7 @@ class course_files {
                 WHERE f.filename NOT LIKE \'.\'
                     AND (c.path LIKE :path OR c.id = :cid) ' . $sqlwhere;
 
-        $sqlselectfiles = 'SELECT f.*, c.contextlevel, c.instanceid,' . $usernamefields .
+        $sqlselectfiles = 'SELECT f.*, c.contextlevel, c.instanceid, ' . $usernameselect .
         ' ' . $sql . ' ORDER BY f.component, f.filename';
 
         $params = array(
@@ -149,7 +151,7 @@ class course_files {
     /**
      * Creates an SQL snippet
      *
-     * @param array $types
+     * @param $types
      * @param boolean $in
      * @return string
      */
@@ -223,7 +225,7 @@ class course_files {
      *
      * @param array $fileids keys are the file IDs
      * @param string $license shortname of the license
-     * @throws moodle_exception
+     * @throws \moodle_exception
      */
     public function set_files_license($fileids, $license) {
         global $DB;
@@ -301,7 +303,7 @@ class course_files {
      * This function does not return if the zip archive could be created.
      *
      * @param array $fileids file ids
-     * @throws moodle_exception
+     * @throws \moodle_exception
      */
     public function download_files(&$fileids) {
         global $DB, $CFG;
