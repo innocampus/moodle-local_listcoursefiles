@@ -46,8 +46,7 @@ class contentbank extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-            $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+        return $this->get_standard_file_download_url($file);
     }
 
     /**

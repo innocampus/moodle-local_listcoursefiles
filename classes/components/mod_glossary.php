@@ -33,12 +33,8 @@ class mod_glossary extends course_file {
      * @return null|\moodle_url
      */
     public function get_file_download_url($file) {
-        if ($file->filearea === 'entry') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
-        } else if ($file->filearea === 'attachment') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+        if ($file->filearea === 'entry' || $file->filearea === 'attachment') {
+            return $this->get_standard_file_download_url($file);
         } else {
             return parent::get_file_download_url($file);
         }

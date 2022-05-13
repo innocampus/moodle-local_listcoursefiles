@@ -35,13 +35,11 @@ class course extends course_file {
     public function get_file_download_url($file) {
         switch ($file->filearea) {
             case 'section':
-                return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                    $file->filearea . '/' . $file->itemid . $file->filepath . $file->filename);
+                return $this->get_standard_file_download_url($file);
             case 'legacy':
                 return new \moodle_url('/file.php/' . $this->courseid . $file->filepath . $file->filename);
             case 'overviewfiles':
-                return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                    $file->filearea . '/' . $file->filepath . $file->filename);
+                return $this->get_standard_file_download_url($file, false);
             default :
                 return parent::get_file_download_url($file);
         }

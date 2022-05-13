@@ -34,8 +34,7 @@ class mod_resource extends course_file {
      */
     public function get_file_download_url($file) {
         if ($file->filearea === 'content') {
-            return new \moodle_url('/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' .
-                $file->filearea . '/0' . $file->filepath . $file->filename);
+            return $this->get_standard_file_download_url($file);
         } else {
             return parent::get_file_download_url($file);
         }
