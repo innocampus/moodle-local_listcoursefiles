@@ -251,7 +251,7 @@ class course_files {
                 WHERE f.id ' . $sqlin;
         $res = $DB->get_records_sql($sql, $paramfids);
 
-        $checkedfileids = $this->check_files_context($res, true);
+        $checkedfileids = array_column($this->check_files_context($res), 'id');
         if (count($checkedfileids) == 0) {
             return;
         }
@@ -280,17 +280,16 @@ class course_files {
      * The file objects need to have the contextid and the context path.
      *
      * @param array $files array of stdClass as retrieved from the files and context table
-     * @param bool $returnfileids return file ids or objects
      * @return array file ids that belong to the context
      */
-    protected function check_files_context(&$files, $returnfileids = false) {
+    protected function check_files_context(&$files) {
         $thiscontextpath = $this->context->path . '/';
         $thiscontextpathlen = strlen($thiscontextpath);
         $thiscontextid = $this->context->id;
         $checkedfiles = array();
         foreach ($files as &$f) {
             if ($f->contextid == $thiscontextid || substr($f->path, 0, $thiscontextpathlen) === $thiscontextpath) {
-                $checkedfiles[] = ($returnfileids) ? $f->id : $f;
+                $checkedfiles[] = $f;
             }
         }
 
@@ -378,7 +377,7 @@ class course_files {
      */
     public static function get_file_types() {
         $types = array('all' => \get_string('filetype_all', 'local_listcoursefiles'));
-        foreach (mimetypes::get_mime_types() as $type => $unused) {
+        foreach (array_keys(mimetypes::get_mime_types()) as $type) {
             $types[$type] = \get_string('filetype_' . $type, 'local_listcoursefiles');
         }
         $types['other'] = \get_string('filetype_other', 'local_listcoursefiles');
