@@ -58,6 +58,7 @@ $string['nothingfound'] = 'No files found';
 $string['nottested'] = 'Not tested';
 $string['no_file_selected'] = 'You have not selected a file.';
 $string['pluginname'] = 'List course files';
+$string['privacy:metadata'] = 'The list course files plugin only displays existing files.';
 $string['too_many_files'] = 'Too many files given';
 $string['uploader'] = 'Uploader';
 $string['used'] = 'Used';

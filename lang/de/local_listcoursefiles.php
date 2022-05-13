@@ -58,6 +58,7 @@ $string['nothingfound'] = 'Keine Dateien gefunden.';
 $string['nottested'] = 'Nicht überprüft';
 $string['no_file_selected'] = 'Es wurde keine Datei ausgewählt.';
 $string['pluginname'] = 'Auflistung der Kursdateien';
+$string['privacy:metadata'] = 'Das Plugin Auflistung der Kursdateien zeigt nur bereits existierende Dateien an.';
 $string['too_many_files'] = 'Zu viele Dateien gegeben';
 $string['uploader'] = 'Hochgeladen von';
 $string['used'] = 'Verwendet';
