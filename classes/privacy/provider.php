@@ -24,8 +24,6 @@
 
 namespace local_listcoursefiles\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for local_listcoursefiles implementing null_provider.
  *

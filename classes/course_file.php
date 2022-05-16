@@ -191,7 +191,7 @@ class course_file {
      */
     protected function get_file_download_url($file) {
         if ($file->filearea == 'intro') {
-            return $this->get_standard_file_download_url($file, true);
+            return $this->get_standard_file_download_url($file);
         }
         return null;
     }
@@ -201,7 +201,7 @@ class course_file {
      *
      * Most pluginfile urls are constructed the same way.
      *
-     * @param $file
+     * @param \stdClass $file
      * @param bool $insertitemid
      * @return \moodle_url
      */

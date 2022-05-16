@@ -25,8 +25,6 @@ namespace local_listcoursefiles\output;
 
 use moodle_url;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Implements the plugin renderer
  *
@@ -51,7 +49,8 @@ class renderer extends \plugin_renderer_base {
             array $filelist, bool $changelicenseallowed, bool $downloadallowed) {
         $tpldata = new \stdClass();
         $tpldata->course_selection_html = $this->get_course_selection($url, $files->get_course_id());
-        $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(), $files->get_filter_component());
+        $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(),
+            $files->get_filter_component());
         $tpldata->file_type_selection_html = $this->get_file_type_selection($url, $files->get_filter_file_type());
         $tpldata->paging_bar_html = $this->output->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
         $tpldata->url = $url;
@@ -80,7 +79,7 @@ class renderer extends \plugin_renderer_base {
      * Builds the course select drop-down menu HTML snippet.
      *
      * @param moodle_url $url
-     * @param integer $currentcourseid
+     * @param int $currentcourseid
      * @return string
      * @throws \coding_exception
      */
