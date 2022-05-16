@@ -114,7 +114,7 @@ class course_file {
 
         $componenturl = $this->get_component_url($file);
         $this->filecomponenturl = ($componenturl) ? $componenturl->out() : false;
-        $this->filecomponent = local_listcoursefiles_get_component_translation($file->component);
+        $this->filecomponent = course_files::get_component_translation($file->component);
 
         $isused = $this->is_file_used($file);
 

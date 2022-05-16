@@ -29,6 +29,9 @@ namespace local_listcoursefiles;
  * @package local_listcoursefiles
  */
 class course_files {
+    /** @var int maximum number of files per page. */
+    const MAX_FILES = 500;
+
     /**
      * @var \context
      */
@@ -83,6 +86,33 @@ class course_files {
         $this->filtercomponent = $component;
         $this->filterfiletype = $filetype;
         $this->coursemodinfo = get_fast_modinfo($courseid);
+    }
+
+    /**
+     * Get course id.
+     *
+     * @return int
+     */
+    public function get_course_id() : int {
+        return $this->courseid;
+    }
+
+    /**
+     * Get filter component name.
+     *
+     * @return string
+     */
+    public function get_filter_component() : string {
+        return $this->filtercomponent;
+    }
+
+    /**
+     * Get filter file type name.
+     *
+     * @return string
+     */
+    public function get_filter_file_type() : string {
+        return $this->filterfiletype;
     }
 
     /**
@@ -207,7 +237,7 @@ class course_files {
 
         $this->components = array();
         foreach ($ret as $r) {
-            $this->components[$r] = local_listcoursefiles_get_component_translation($r);
+            $this->components[$r] = self::get_component_translation($r);
         }
 
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
@@ -235,7 +265,7 @@ class course_files {
             throw new \moodle_exception('invalid_license', 'local_listcoursefiles');
         }
 
-        if (count($fileids) > LOCAL_LISTCOURSEFILES_MAX_FILES) {
+        if (count($fileids) > self::MAX_FILES) {
             throw new \moodle_exception('too_many_files', 'local_listcoursefiles');
         }
 
@@ -307,7 +337,7 @@ class course_files {
     public function download_files(&$fileids) {
         global $DB, $CFG;
 
-        if (count($fileids) > LOCAL_LISTCOURSEFILES_MAX_FILES) {
+        if (count($fileids) > self::MAX_FILES) {
             throw new \moodle_exception('too_many_files', 'local_listcoursefiles');
         }
 
@@ -384,4 +414,19 @@ class course_files {
         return $types;
     }
 
+    /**
+     * Try to get the name of the file component in the user's lang.
+     *
+     * @param string $name
+     * @return \lang_string|string
+     * @throws \coding_exception
+     */
+    public static function get_component_translation($name) {
+        if (get_string_manager()->string_exists('pluginname', $name)) {
+            return get_string('pluginname', $name);
+        } else if (get_string_manager()->string_exists($name, '')) {
+            return get_string($name, '');
+        }
+        return $name;
+    }
 }
