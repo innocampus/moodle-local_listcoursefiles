@@ -29,34 +29,36 @@ class mod_glossary extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea === 'entry' || $file->filearea === 'attachment') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        switch ($this->file->filearea) {
+            case 'entry':
+            case 'attachment':
+                return $this->get_standard_file_download_url();
+            default:
+                return parent::get_file_download_url();
         }
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, chapter.
         global $DB;
-        if ($file->filearea === 'attachment') {
-            return true;
-        } else if ($file->filearea === 'entry') {
-            $entry = $DB->get_record('glossary_entries', ['id' => $file->itemid]);
-            $isused = $this->is_embedded_file_used($entry, 'definition', $file->filename);
-            return $isused;
-        } else {
-            return parent::is_file_used($file);
+        switch ($this->file->filearea) {
+            case 'attachment':
+                return true;
+            case 'entry':
+                $entry = $DB->get_record('glossary_entries', ['id' => $this->file->itemid]);
+                return $this->is_embedded_file_used($entry, 'definition', $this->file->filename);
+            default:
+                return parent::is_file_used();
         }
     }
 }

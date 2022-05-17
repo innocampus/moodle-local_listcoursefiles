@@ -29,53 +29,45 @@ class mod_book extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea == 'chapter') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        if ($this->file->filearea == 'chapter') {
+            return $this->get_standard_file_download_url();
         }
+        return parent::get_file_download_url();
     }
 
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @param object $file
      * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function get_edit_url($file) {
+    protected function get_edit_url() : ?\moodle_url {
         global $DB;
-        $url = null;
-        if ($file->filearea === 'chapter') { // Just checking description for now.
-            $ctx = $DB->get_record('context', ['id' => $file->contextid]);
-            $url = new \moodle_url('/mod/book/edit.php', ['cmid' => $ctx->instanceid, 'id' => $file->itemid]);
-        } else {
-            $url = parent::get_edit_url($file);
+        if ($this->file->filearea === 'chapter') { // Just checking description for now.
+            $ctx = $DB->get_record('context', ['id' => $this->file->contextid]);
+            return new \moodle_url('/mod/book/edit.php', ['cmid' => $ctx->instanceid, 'id' => $this->file->itemid]);
         }
-
-        return $url;
+        return parent::get_edit_url();
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, chapter.
         global $DB;
-        if ($file->filearea === 'chapter') {
-            $chapter = $DB->get_record('book_chapters', ['id' => $file->itemid]);
-            $isused = $this->is_embedded_file_used($chapter, 'content', $file->filename);
-            return $isused;
-        } else {
-            return parent::is_file_used($file);
+        if ($this->file->filearea === 'chapter') {
+            $chapter = $DB->get_record('book_chapters', ['id' => $this->file->itemid]);
+            return $this->is_embedded_file_used($chapter, 'content', $this->file->filename);
         }
+        return parent::is_file_used();
     }
 }

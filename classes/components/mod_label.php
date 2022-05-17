@@ -29,26 +29,26 @@ class mod_label extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        return $this->get_standard_file_download_url($file, false);
+    protected function get_file_download_url() : ?\moodle_url {
+        return $this->get_standard_file_download_url(false);
     }
 
     /**
      * Try to get the url for the component (module or course).
      *
-     * @param object $file
      * @return null|\moodle_url
-     * @throws moodle_exception
+     * @throws \moodle_exception
      */
-    public function get_component_url($file) {
+    protected function get_component_url() : ?\moodle_url {
         global $DB;
-        $sql = 'SELECT cm.* FROM {context} ctx
-                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                            WHERE ctx.id = ?';
-        $mod = $DB->get_record_sql($sql, [$file->contextid]);
+        $sql = 'SELECT cm.*
+                  FROM {context} ctx
+                  JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                 WHERE ctx.id = ?';
+        $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
         return new \moodle_url('/course/view.php', ['id' => $mod->course, 'sectionid' => $mod->section]);
     }
 }
