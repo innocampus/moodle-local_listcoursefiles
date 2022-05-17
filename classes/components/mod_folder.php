@@ -29,29 +29,27 @@ class mod_folder extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea === 'content') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        if ($this->file->filearea === 'content') {
+            return $this->get_standard_file_download_url();
         }
+        return parent::get_file_download_url();
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, content.
-        if ($file->filearea === 'content') {
-                return true;
-        } else {
-            return parent::is_file_used($file);
+        if ($this->file->filearea === 'content') {
+            return true;
         }
+        return parent::is_file_used();
     }
 }

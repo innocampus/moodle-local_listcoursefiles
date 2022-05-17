@@ -25,6 +25,11 @@ namespace local_listcoursefiles;
  */
 class course_file {
     /**
+     * @var \stdClass
+     */
+    protected $file;
+
+    /**
      * @var int
      */
     protected $courseid = 0;
@@ -93,31 +98,31 @@ class course_file {
 
     /**
      * course_file constructor.
-     * @param object $file
+     * @param \stdClass $file
      * @throws \coding_exception
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function __construct($file) {
+    public function __construct(\stdClass $file) {
         global $COURSE;
         $this->courseid = $COURSE->id;
+        $this->file = $file;
         $this->filelicense = licences::get_license_name_color($file->license);
         $this->fileid = $file->id;
         $this->filesize = display_size($file->filesize);
         $this->filetype = mimetypes::get_file_type_translation($file->mimetype);
         $this->fileuploader = fullname($file);
-        $this->fileexpired = !$this->check_mimetype_license_expiry_date($file);
+        $this->fileexpired = !$this->check_mimetype_license_expiry_date();
 
-        $fileurl = $this->get_file_download_url($file);
+        $fileurl = $this->get_file_download_url();
         $this->fileurl = ($fileurl) ? $fileurl->out() : false;
-        $this->filename = $this->get_displayed_filename($file);
+        $this->filename = $this->get_displayed_filename();
 
-        $componenturl = $this->get_component_url($file);
+        $componenturl = $this->get_component_url();
         $this->filecomponenturl = ($componenturl) ? $componenturl->out() : false;
         $this->filecomponent = course_files::get_component_translation($file->component);
 
-        $isused = $this->is_file_used($file);
-
+        $isused = $this->is_file_used();
         if ($isused === true) {
             $this->fileused = get_string('yes', 'core');
         } else if ($isused === false) {
@@ -126,17 +131,16 @@ class course_file {
             $this->fileused = get_string('nottested', 'local_listcoursefiles');
         }
 
-        $editurl = $this->get_edit_url($file);
+        $editurl = $this->get_edit_url();
         $this->fileediturl = ($editurl) ? $editurl->out(false) : false;
     }
 
     /**
      * Getter for filename
-     * @param object $file
      * @return string
      */
-    protected function get_displayed_filename($file) {
-        return $file->filename;
+    protected function get_displayed_filename() : string {
+        return $this->file->filename;
     }
 
     /**
@@ -145,7 +149,7 @@ class course_file {
      * This checks if a file has been expired because:
      *  - it is a document (has a particular mimetype),
      *  - has been provided under a specific license
-     *  - and the expiry date is exceed (in respect of the coure start date and the file creation time).
+     *  - and the expiry date is exceed (in respect of the course start date and the file creation time).
      *
      * The following settings need to be defined in the config.php:
      *   array $CFG->fileexpirylicenses which licenses (shortnames) expire
@@ -154,10 +158,9 @@ class course_file {
      *
      * These adjustments were made by Technische Universität Berlin in order to conform to § 52a UrhG.
      *
-     * @param stdClass $file
      * @return boolean whether file is allowed to be delivered to students
      */
-    protected function check_mimetype_license_expiry_date($file) {
+    protected function check_mimetype_license_expiry_date() : bool {
         global $CFG, $COURSE;
 
         // Check if enabled/configured.
@@ -165,17 +168,17 @@ class course_file {
             return true;
         }
 
-        if (in_array($file->license, $CFG->fileexpirylicenses)) {
+        if (in_array($this->file->license, $CFG->fileexpirylicenses)) {
             $isdoc = false;
-            $fmimetype = $file->mimetype;
+            $fmimetype = $this->file->mimetype;
             foreach ($CFG->filemimetypes['document'] as $mime) {
                 if ($mime === $fmimetype || (substr($mime, -1) === '%' && strncmp($mime, $fmimetype, strlen($mime) - 1) === 0)) {
                     $isdoc = true;
                     break;
                 }
             }
-            $coursestart = isset($COURSE->startdate) ? $COURSE->startdate : 0;
-            if ($isdoc && $CFG->fileexpirydate > max($coursestart, $file->timecreated)) {
+            $coursestart = $COURSE->startdate ?? 0;
+            if ($isdoc && $CFG->fileexpirydate > max($coursestart, $this->file->timecreated)) {
                 return false;
             }
         }
@@ -186,12 +189,12 @@ class course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    protected function get_file_download_url($file) {
-        if ($file->filearea == 'intro') {
-            return $this->get_standard_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        if ($this->file->filearea == 'intro') {
+            return $this->get_standard_file_download_url();
         }
         return null;
     }
@@ -201,122 +204,107 @@ class course_file {
      *
      * Most pluginfile urls are constructed the same way.
      *
-     * @param \stdClass $file
      * @param bool $insertitemid
      * @return \moodle_url
+     * @throws \moodle_exception
      */
-    protected function get_standard_file_download_url($file, $insertitemid = true) {
-        $url = '/pluginfile.php/' . $file->contextid . '/' . $file->component . '/' . $file->filearea;
+    protected function get_standard_file_download_url(bool $insertitemid = true) : \moodle_url {
+        $url = '/pluginfile.php/' . $this->file->contextid . '/' . $this->file->component . '/' . $this->file->filearea;
         if ($insertitemid) {
-            $url .= '/' . $file->itemid;
+            $url .= '/' . $this->file->itemid;
         }
-        $url .= $file->filepath . $file->filename;
-
+        $url .= $this->file->filepath . $this->file->filename;
         return new \moodle_url($url);
     }
 
     /**
      * Try to get the url for the component (module or course).
      *
-     * @param object $file
      * @return null|\moodle_url
-     * @throws moodle_exception
+     * @throws \moodle_exception
      */
-    protected function get_component_url($file) {
-        if ($file->contextlevel == CONTEXT_MODULE) {
-            $this->coursemodinfo = get_fast_modinfo($this->courseid);
-            if (!empty($this->coursemodinfo->cms[$file->instanceid])) {
-                return $this->coursemodinfo->cms[$file->instanceid]->url;
+    protected function get_component_url() : ?\moodle_url {
+        if ($this->file->contextlevel == CONTEXT_MODULE) {
+            $coursemodinfo = get_fast_modinfo($this->courseid);
+            if (!empty($coursemodinfo->cms[$this->file->instanceid])) {
+                return $coursemodinfo->cms[$this->file->instanceid]->url;
             }
         }
-
         return null;
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         global $DB;
-        $isused = null;
-        $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
-
+        $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
         switch ($component) {
-            case 'mod' : // Course module.
-                $modname = str_replace('mod_', '', $file->component);
-                if ($file->filearea === 'intro') {
-                    $sql = 'SELECT m.* FROM {context} ctx
-                            JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                            JOIN {' . $modname . '} m ON m.id = cm.instance
-                            WHERE ctx.id = ?';
-                    $mod = $DB->get_record_sql($sql, [$file->contextid]);
-                    $isused = $this->is_embedded_file_used($mod, 'intro', $file->filename);
+            case 'mod': // Course module.
+                $modname = str_replace('mod_', '', $this->file->component);
+                if ($this->file->filearea === 'intro') {
+                    $sql = "SELECT m.*
+                              FROM {context} ctx
+                              JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                              JOIN {$modname} m ON m.id = cm.instance
+                             WHERE ctx.id = ?";
+                    $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+                    return $this->is_embedded_file_used($mod, 'intro', $this->file->filename);
                 }
                 break;
-            case 'question' :
-                $question = $DB->get_record('question', ['id' => $file->itemid]);
-                $isused = $this->is_embedded_file_used($question, $file->filearea, $file->filename);
-                break;
-            case 'qtype_essay' :
-                $question = $DB->get_record('qtype_essay_options', ['questionid' => $file->itemid]);
-                $isused = $this->is_embedded_file_used($question, 'graderinfo', $file->filename);
-                break;
-            default :
-                $isused = null;
+            case 'question':
+                $question = $DB->get_record('question', ['id' => $this->file->itemid]);
+                return $this->is_embedded_file_used($question, $this->file->filearea, $this->file->filename);
+            case 'qtype_essay':
+                $question = $DB->get_record('qtype_essay_options', ['questionid' => $this->file->itemid]);
+                return $this->is_embedded_file_used($question, 'graderinfo', $this->file->filename);
         }
-        return $isused;
+        return null;
     }
 
     /**
-     * Test if a file is embbeded in text
+     * Test if a file is embedded in text
      *
      * @param object $record
      * @param string $field
      * @param string $filename
      * @return bool|null
      */
-    protected function is_embedded_file_used($record, $field, $filename) {
+    protected function is_embedded_file_used(object $record, string $field, string $filename) : ?bool {
         if ($record && property_exists($record, $field)) {
             return is_int(strpos($record->$field, '@@PLUGINFILE@@/' . rawurlencode($filename)));
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @param object $file
      * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    protected function get_edit_url($file) {
+    protected function get_edit_url() : ?\moodle_url {
         global $DB;
-        $url = null;
-        $component = strpos($file->component, 'mod_') === 0 ? 'mod' : $file->component;
-
+        $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
         switch ($component) {
-            case 'mod' :
-                if ($file->filearea === 'intro') { // Just checking description for now.
-                    $sql = 'SELECT cm.* FROM {context} ctx
-                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                        WHERE ctx.id = ?';
-                    $mod = $DB->get_record_sql($sql, [$file->contextid]);
-                    $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+            case 'mod':
+                if ($this->file->filearea === 'intro') { // Just checking description for now.
+                    $sql = 'SELECT cm.*
+                              FROM {context} ctx
+                              JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                             WHERE ctx.id = ?';
+                    $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+                    return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
                 }
                 break;
-            case 'question' :
-            case 'qtype_essay' :
-                $url = new \moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $file->itemid]);
-                break;
-            default :
-                $url = null;
+            case 'question':
+            case 'qtype_essay':
+                return new \moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $this->file->itemid]);
         }
-        return $url;
+        return null;
     }
 }

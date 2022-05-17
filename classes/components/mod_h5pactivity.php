@@ -29,39 +29,34 @@ class mod_h5pactivity extends course_file {
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @param object $file
      * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function get_edit_url($file) {
+    protected function get_edit_url() : ?\moodle_url {
         global $DB;
-        $url = null;
-        if ($file->filearea === 'package') {
-            $sql = 'SELECT cm.* FROM {context} ctx
-                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                        WHERE ctx.id = ?';
-            $mod = $DB->get_record_sql($sql, [$file->contextid]);
-            $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
-        } else {
-            $url = parent::get_edit_url($file);
+        if ($this->file->filearea === 'package') {
+            $sql = 'SELECT cm.*
+                      FROM {context} ctx
+                      JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                     WHERE ctx.id = ?';
+            $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+            return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
         }
-
-        return $url;
+        return parent::get_edit_url();
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, package.
-        if ($file->filearea === 'package') {
+        if ($this->file->filearea === 'package') {
             return true;
-        } else {
-            return parent::is_file_used($file);
         }
+        return parent::is_file_used();
     }
 }

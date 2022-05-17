@@ -29,64 +29,65 @@ class mod_feedback extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea === 'item' || $file->filearea === 'page_after_submit') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        switch ($this->file->filearea) {
+            case 'item':
+            case 'page_after_submit':
+                return $this->get_standard_file_download_url();
+            default:
+                return parent::get_file_download_url();
         }
     }
 
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @param object $file
      * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function get_edit_url($file) {
+    protected function get_edit_url() : ?\moodle_url {
         global $DB;
-        $url = null;
-        if ($file->filearea === 'item' || $file->filearea === 'page_after_submit') {
-            $sql = 'SELECT cm.* FROM {context} ctx
-                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                        WHERE ctx.id = ?';
-            $mod = $DB->get_record_sql($sql, [$file->contextid]);
-            $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
-        } else {
-            $url = parent::get_edit_url($file);
+        switch ($this->file->filearea) {
+            case 'item':
+            case 'page_after_submit':
+                $sql = 'SELECT cm.*
+                          FROM {context} ctx
+                          JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                         WHERE ctx.id = ?';
+                $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+                return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+            default:
+                return parent::get_edit_url();
         }
-
-        return $url;
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, item, page_after_submit.
         global $DB;
-        if ($file->filearea === 'item') {
-            $item = $DB->get_record('feedback_item', ['id' => $file->itemid]);
-            $isused = $this->is_embedded_file_used($item, 'presentation', $file->filename);
-            return $isused;
-        } else if ($file->filearea = 'page_after_submit') {
-            $sql = 'SELECT m.* FROM {feedback} m
-                    JOIN {course_modules} cm ON cm.instance = m.id
-                    JOIN {context} ctx ON ctx.instanceid = cm.id
-                    WHERE ctx.id = ?';
-            $feedback = $DB->get_record_sql($sql, [$file->contextid]);
-            $isused = $this->is_embedded_file_used($feedback, 'page_after_submit', $file->filename);
-            return $isused;
-        } else {
-            return parent::is_file_used($file);
+        switch ($this->file->filearea) {
+            case 'item':
+                $item = $DB->get_record('feedback_item', ['id' => $this->file->itemid]);
+                return $this->is_embedded_file_used($item, 'presentation', $this->file->filename);
+            case 'page_after_submit':
+                $sql = 'SELECT m.*
+                          FROM {feedback} m
+                          JOIN {course_modules} cm ON cm.instance = m.id
+                          JOIN {context} ctx ON ctx.instanceid = cm.id
+                         WHERE ctx.id = ?';
+                $feedback = $DB->get_record_sql($sql, [$this->file->contextid]);
+                return $this->is_embedded_file_used($feedback, 'page_after_submit', $this->file->filename);
+            default:
+                return parent::is_file_used();
         }
     }
 }

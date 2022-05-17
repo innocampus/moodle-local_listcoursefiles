@@ -29,53 +29,47 @@ class mod_resource extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea === 'content') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        if ($this->file->filearea === 'content') {
+            return $this->get_standard_file_download_url();
         }
+        return parent::get_file_download_url();
     }
 
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @param object $file
      * @return \moodle_url|null
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public function get_edit_url($file) {
+    protected function get_edit_url() : ?\moodle_url {
         global $DB;
-        $url = null;
-        if ($file->filearea === 'content') {
-            $sql = 'SELECT cm.* FROM {context} ctx
-                        JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                        WHERE ctx.id = ?';
-            $mod = $DB->get_record_sql($sql, [$file->contextid]);
-            $url = new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
-        } else {
-            $url = parent::get_edit_url($file);
+        if ($this->file->filearea === 'content') {
+            $sql = 'SELECT cm.*
+                      FROM {context} ctx
+                      JOIN {course_modules} cm ON cm.id = ctx.instanceid
+                     WHERE ctx.id = ?';
+            $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+            return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
         }
-
-        return $url;
+        return parent::get_edit_url();
     }
 
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, chapter.
-        if ($file->filearea === 'content') {
+        if ($this->file->filearea === 'content') {
             return true;
-        } else {
-            return parent::is_file_used($file);
         }
+        return parent::is_file_used();
     }
 }

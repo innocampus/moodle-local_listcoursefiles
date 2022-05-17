@@ -29,33 +29,35 @@ class mod_forum extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @param object $file
      * @return null|\moodle_url
+     * @throws \moodle_exception
      */
-    public function get_file_download_url($file) {
-        if ($file->filearea === 'post' || $file->filearea === 'attachment') {
-            return $this->get_standard_file_download_url($file);
-        } else {
-            return parent::get_file_download_url($file);
+    protected function get_file_download_url() : ?\moodle_url {
+        switch ($this->file->filearea) {
+            case 'post':
+            case 'attachment':
+                return $this->get_standard_file_download_url();
+            default:
+                return parent::get_file_download_url();
         }
     }
     /**
      * Checks if embedded files have been used
      *
-     * @param object $file
-     * @return bool
+     * @return bool|null
+     * @throws \dml_exception
      */
-    public function is_file_used($file) {
+    protected function is_file_used() : ?bool {
         // File areas = intro, post.
         global $DB;
-        if ($file->filearea === 'post') {
-            $post = $DB->get_record('forum_posts', ['id' => $file->itemid]);
-            $isused = $this->is_embedded_file_used($post, 'message', $file->filename);
-            return $isused;
-        } else if ($file->filearea === 'attachment') {
-            return true;
-        } else {
-            return parent::is_file_used($file);
+        switch ($this->file->filearea) {
+            case 'post':
+                $post = $DB->get_record('forum_posts', ['id' => $this->file->itemid]);
+                return $this->is_embedded_file_used($post, 'message', $this->file->filename);
+            case 'attachment':
+                return true;
+            default:
+                return parent::is_file_used();
         }
     }
 }
