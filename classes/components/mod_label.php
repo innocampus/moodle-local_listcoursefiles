@@ -44,10 +44,10 @@ class mod_label extends course_file {
      */
     protected function get_component_url() : ?\moodle_url {
         global $DB;
-        $sql = 'SELECT cm.*
+        $sql = "SELECT cm.*
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                 WHERE ctx.id = ?';
+                 WHERE ctx.id = ?";
         $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
         return new \moodle_url('/course/view.php', ['id' => $mod->course, 'sectionid' => $mod->section]);
     }

@@ -24,6 +24,9 @@
 namespace local_listcoursefiles\output;
 
 use moodle_url;
+use local_listcoursefiles\course_file;
+use local_listcoursefiles\course_files;
+use local_listcoursefiles\licences;
 
 /**
  * Implements the plugin renderer
@@ -36,7 +39,7 @@ class renderer extends \plugin_renderer_base {
      * Render overview page.
      *
      * @param moodle_url $url
-     * @param \local_listcoursefiles\course_files $files
+     * @param course_files $files
      * @param int $page
      * @param int $limit
      * @param array $filelist
@@ -45,33 +48,25 @@ class renderer extends \plugin_renderer_base {
      * @return string
      * @throws \moodle_exception
      */
-    public function overview_page(moodle_url $url, \local_listcoursefiles\course_files $files, int $page, int $limit,
-            array $filelist, bool $changelicenseallowed, bool $downloadallowed) {
+    public function overview_page(moodle_url $url, course_files $files, int $page, int $limit,
+            array $filelist, bool $changelicenseallowed, bool $downloadallowed) : string {
         $tpldata = new \stdClass();
         $tpldata->course_selection_html = $this->get_course_selection($url, $files->get_course_id());
         $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(),
             $files->get_filter_component());
         $tpldata->file_type_selection_html = $this->get_file_type_selection($url, $files->get_filter_file_type());
-        $tpldata->paging_bar_html = $this->output->paging_bar($files->get_file_list_total_size(), $page , $limit, $url, 'page');
+        $tpldata->paging_bar_html = $this->output->paging_bar($files->get_file_list_total_size(), $page , $limit, $url);
         $tpldata->url = $url;
         $tpldata->sesskey = sesskey();
         $tpldata->files = array();
         $tpldata->files_exist = count($filelist) > 0;
         $tpldata->change_license_allowed = $changelicenseallowed;
         $tpldata->download_allowed = $downloadallowed;
-        $licenses = \local_listcoursefiles\licences::get_available_licenses();
+        $licenses = licences::get_available_licenses();
         $tpldata->license_select_html = \html_writer::select($licenses, 'license');
-
         foreach ($filelist as $file) {
-            $classname = '\local_listcoursefiles\components\\' . $file->component;
-            if (class_exists($classname)) {
-                $tplfile = new $classname($file);
-            } else {
-                $tplfile = new \local_listcoursefiles\course_file($file);
-            }
-            $tpldata->files[] = $tplfile;
+            $tpldata->files[] = course_file::create($file);
         }
-
         return $this->render_from_template('local_listcoursefiles/view', $tpldata);
     }
 
@@ -83,7 +78,7 @@ class renderer extends \plugin_renderer_base {
      * @return string
      * @throws \coding_exception
      */
-    public function get_course_selection(moodle_url $url, int $currentcourseid) {
+    public function get_course_selection(moodle_url $url, int $currentcourseid) : string {
         $url = clone $url;
         $url->remove_params('courseid', 'page');
 
@@ -107,7 +102,7 @@ class renderer extends \plugin_renderer_base {
      * @param string $currentcomponent
      * @return string
      */
-    public function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent) {
+    public function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent) : string {
         $url = clone $url;
         $url->remove_params('page');
 
@@ -122,11 +117,11 @@ class renderer extends \plugin_renderer_base {
      * @return string
      * @throws \coding_exception
      */
-    public function get_file_type_selection(moodle_url $url, $currenttype) {
+    public function get_file_type_selection(moodle_url $url, string $currenttype) : string {
         $url = clone $url;
         $url->remove_params('page');
 
-        return $this->output->single_select($url, 'filetype', \local_listcoursefiles\course_files::get_file_types(),
+        return $this->output->single_select($url, 'filetype', course_files::get_file_types(),
             $currenttype, null, 'filetypeselector');
     }
 }

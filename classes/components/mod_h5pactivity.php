@@ -36,10 +36,10 @@ class mod_h5pactivity extends course_file {
     protected function get_edit_url() : ?\moodle_url {
         global $DB;
         if ($this->file->filearea === 'package') {
-            $sql = 'SELECT cm.*
+            $sql = "SELECT cm.*
                       FROM {context} ctx
                       JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                     WHERE ctx.id = ?';
+                     WHERE ctx.id = ?";
             $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
             return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
         }

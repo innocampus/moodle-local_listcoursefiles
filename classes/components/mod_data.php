@@ -49,10 +49,10 @@ class mod_data extends course_file {
         // File areas = intro, content.
         global $DB;
         if ($this->file->filearea === 'content') {
-            $sql = 'SELECT *
+            $sql = "SELECT *
                       FROM {data_content} dc
                       JOIN {data_fields} df ON df.id = dc.fieldid
-                     WHERE dc.id = ?';
+                     WHERE dc.id = ?";
             $data = $DB->get_record_sql($sql, [$this->file->itemid]);
             $path = '@@PLUGINFILE@@/' . rawurlencode($this->file->filename);
             return $data->type !== 'textarea' || false !== strpos($data->content, $path);
