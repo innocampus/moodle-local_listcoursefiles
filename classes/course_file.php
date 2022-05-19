@@ -16,6 +16,8 @@
 
 namespace local_listcoursefiles;
 
+use Matrix\Exception;
+
 /**
  * Class course_file
  * @package local_listcoursefiles
@@ -245,11 +247,14 @@ class course_file {
         switch ($component) {
             case 'mod': // Course module.
                 $modname = str_replace('mod_', '', $this->file->component);
+                if (!array_key_exists($modname, \core_component::get_plugin_list('mod'))) {
+                    return null;
+                }
                 if ($this->file->filearea === 'intro') {
                     $sql = "SELECT m.*
                               FROM {context} ctx
                               JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                              JOIN {$modname} m ON m.id = cm.instance
+                              JOIN {{$modname}} m ON m.id = cm.instance
                              WHERE ctx.id = ?";
                     $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
                     return $this->is_embedded_file_used($mod, 'intro', $this->file->filename);
