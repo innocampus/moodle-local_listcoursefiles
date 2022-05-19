@@ -16,8 +16,6 @@
 
 namespace local_listcoursefiles;
 
-use Matrix\Exception;
-
 /**
  * Class course_file
  * @package local_listcoursefiles
@@ -97,6 +95,21 @@ class course_file {
      */
     public $fileused;
 
+    /**
+     * Creates an object of this class or an appropriate subclass.
+     * @param \stdClass $file
+     * @return course_file
+     * @throws \coding_exception
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
+    public static function create(\stdClass $file) : course_file {
+        $classname = '\local_listcoursefiles\components\\' . $file->component;
+        if (class_exists($classname)) {
+            return new $classname($file);
+        }
+        return new course_file($file);
+    }
 
     /**
      * course_file constructor.
@@ -273,12 +286,12 @@ class course_file {
     /**
      * Test if a file is embedded in text
      *
-     * @param object $record
+     * @param \stdClass|false $record
      * @param string $field
      * @param string $filename
      * @return bool|null
      */
-    protected function is_embedded_file_used(object $record, string $field, string $filename) : ?bool {
+    protected function is_embedded_file_used($record, string $field, string $filename) : ?bool {
         if ($record && property_exists($record, $field)) {
             return is_int(strpos($record->$field, '@@PLUGINFILE@@/' . rawurlencode($filename)));
         }
@@ -298,10 +311,10 @@ class course_file {
         switch ($component) {
             case 'mod':
                 if ($this->file->filearea === 'intro') { // Just checking description for now.
-                    $sql = 'SELECT cm.*
+                    $sql = "SELECT cm.*
                               FROM {context} ctx
                               JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                             WHERE ctx.id = ?';
+                             WHERE ctx.id = ?";
                     $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
                     return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
                 }

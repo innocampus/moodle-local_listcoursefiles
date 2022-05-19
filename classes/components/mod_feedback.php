@@ -54,10 +54,10 @@ class mod_feedback extends course_file {
         switch ($this->file->filearea) {
             case 'item':
             case 'page_after_submit':
-                $sql = 'SELECT cm.*
+                $sql = "SELECT cm.*
                           FROM {context} ctx
                           JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                         WHERE ctx.id = ?';
+                         WHERE ctx.id = ?";
                 $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
                 return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
             default:
@@ -79,11 +79,11 @@ class mod_feedback extends course_file {
                 $item = $DB->get_record('feedback_item', ['id' => $this->file->itemid]);
                 return $this->is_embedded_file_used($item, 'presentation', $this->file->filename);
             case 'page_after_submit':
-                $sql = 'SELECT m.*
+                $sql = "SELECT m.*
                           FROM {feedback} m
                           JOIN {course_modules} cm ON cm.instance = m.id
                           JOIN {context} ctx ON ctx.instanceid = cm.id
-                         WHERE ctx.id = ?';
+                         WHERE ctx.id = ?";
                 $feedback = $DB->get_record_sql($sql, [$this->file->contextid]);
                 return $this->is_embedded_file_used($feedback, 'page_after_submit', $this->file->filename);
             default:

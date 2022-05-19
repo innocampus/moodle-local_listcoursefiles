@@ -49,10 +49,10 @@ class mod_page extends course_file {
     protected function get_edit_url() : ?\moodle_url {
         global $DB;
         if ($this->file->filearea === 'content') { // Just checking description for now.
-            $sql = 'SELECT cm.*
+            $sql = "SELECT cm.*
                       FROM {context} ctx
                       JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                     WHERE ctx.id = ?';
+                     WHERE ctx.id = ?";
             $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
             return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
         }
@@ -69,11 +69,11 @@ class mod_page extends course_file {
         // File areas = intro, content.
         global $DB;
         if ($this->file->filearea === 'content') {
-            $sql = 'SELECT m.*
+            $sql = "SELECT m.*
                       FROM {page} m
                       JOIN {course_modules} cm ON cm.instance = m.id
                       JOIN {context} ctx ON ctx.instanceid = cm.id
-                     WHERE ctx.id = ?';
+                     WHERE ctx.id = ?";
             $page = $DB->get_record_sql($sql, [$this->file->contextid]);
             return $this->is_embedded_file_used($page, 'content', $this->file->filename);
         }
