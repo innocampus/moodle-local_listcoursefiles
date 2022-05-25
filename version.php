@@ -26,9 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2017021402;
+$plugin->version   = 2022052500;
 $plugin->requires  = 2016051900;
 $plugin->cron      = 0;
 $plugin->component = "local_listcoursefiles";
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "1.2.1";
+$plugin->release   = "1.3.0";
