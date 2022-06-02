@@ -146,9 +146,14 @@ class course_files {
             $sqlwhere .= ' AND ' . $this->get_sql_mimetype($this->filterfiletype, true);
         }
 
-        $usernameselect = implode(', ', array_map(function($field) {
-            return 'u.' . $field;
-        }, \core_user\fields::get_name_fields()));
+        if (class_exists('\core_user\fields')) {
+            $usernameselect = implode(', ', array_map(function($field) {
+                return 'u.' . $field;
+            }, \core_user\fields::get_name_fields()));
+        } else {
+            // For compatibility with Moodle 3.9.
+            $usernameselect = get_all_user_name_fields(true, 'u');
+        }
 
         $sql = 'FROM {files} f
                 LEFT JOIN {context} c ON (c.id = f.contextid)
