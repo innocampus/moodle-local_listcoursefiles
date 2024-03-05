@@ -32,7 +32,7 @@ class contentbank extends course_file {
      * @return string
      * @throws \dml_exception
      */
-    protected function get_displayed_filename() : string {
+    protected function get_displayed_filename(): string {
         global $DB;
         $cb = $DB->get_record('contentbank_content', ['id' => $this->file->itemid]);
         return $cb->name;
@@ -44,7 +44,7 @@ class contentbank extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         return $this->get_standard_file_download_url();
     }
 
@@ -54,7 +54,7 @@ class contentbank extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_component_url() : ?\moodle_url {
+    protected function get_component_url(): ?\moodle_url {
         return new \moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
     }
 
@@ -64,7 +64,7 @@ class contentbank extends course_file {
      * @return null
      * @throws \moodle_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         $fs = new \file_storage();
         $f = new \stored_file($fs, $this->file);
         return $fs->get_references_count_by_storedfile($f) > 1;

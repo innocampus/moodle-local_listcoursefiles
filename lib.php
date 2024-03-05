@@ -33,10 +33,12 @@
 function local_listcoursefiles_extend_settings_navigation(settings_navigation $nav, $context) {
     if ($context && ($context instanceof context_course || $context instanceof context_module)) {
         if (has_capability('local/listcoursefiles:view', $context) && $course = $nav->get('courseadmin')) {
-            $url = new moodle_url('/local/listcoursefiles/index.php',
-                    array('courseid' => $context->get_course_context()->instanceid));
-            $course->add(get_string('linkname', 'local_listcoursefiles'), $url, navigation_node::TYPE_CUSTOM,
-                    null, null, new pix_icon('i/report', ''));
+            $url = new moodle_url(
+                '/local/listcoursefiles/index.php',
+                ['courseid' => $context->get_course_context()->instanceid],
+            );
+            $text = get_string('linkname', 'local_listcoursefiles');
+            $course->add($text, $url, navigation_node::TYPE_CUSTOM, null, null, new pix_icon('i/report', ''));
         }
     }
 }

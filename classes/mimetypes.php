@@ -28,20 +28,40 @@ class mimetypes {
      * Mapping of file types to possible mime types.
      * @var array
      */
-    static protected $mimetypes = array(
-        'document' => array('application/epub+zip', 'application/msword', 'application/pdf',
-            'application/postscript', 'application/vnd.ms-%', 'application/vnd.oasis.opendocument%',
-            'application/vnd.openxmlformats-officedocument%', 'application/vnd.sun.xml%',
-            'application/x-digidoc', 'application/xhtml+xml', 'application/x-javascript',
-            'application/x-latex', 'application/xml', 'application/x-ms%', 'application/x-tex%',
-            'document%', 'spreadsheet', 'text/%'),
-        'image' => array('image/%'),
-        'audio' => array('audio/%'),
-        'video' => array('video/%'),
-        'archive' => array('application/zip', 'application/x-tar', 'application/g-zip',
-            'application/x-rar-compressed', 'application/x-7z-compressed', 'application/vnd.moodle.backup'),
-        'hvp' => array('application/zip.h5p'),
-    );
+    static protected $mimetypes = [
+        'document' => [
+            'application/epub+zip',
+            'application/msword',
+            'application/pdf',
+            'application/postscript',
+            'application/vnd.ms-%',
+            'application/vnd.oasis.opendocument%',
+            'application/vnd.openxmlformats-officedocument%',
+            'application/vnd.sun.xml%',
+            'application/x-digidoc',
+            'application/x-javascript',
+            'application/x-latex',
+            'application/x-ms%',
+            'application/x-tex%',
+            'application/xhtml+xml',
+            'application/xml',
+            'document%',
+            'spreadsheet',
+            'text/%',
+        ],
+        'image' => ['image/%'],
+        'audio' => ['audio/%'],
+        'video' => ['video/%'],
+        'archive' => [
+            'application/zip',
+            'application/x-tar',
+            'application/g-zip',
+            'application/x-rar-compressed',
+            'application/x-7z-compressed',
+            'application/vnd.moodle.backup',
+        ],
+        'hvp' => ['application/zip.h5p'],
+    ];
 
     /**
      * mimetypes constructor.

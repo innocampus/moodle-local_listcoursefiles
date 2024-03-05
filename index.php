@@ -36,13 +36,20 @@ if ($limit < 1 || $limit > local_listcoursefiles\course_files::MAX_FILES) {
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
-$chosenfiles = optional_param_array('file', array(), PARAM_INT);
+$chosenfiles = optional_param_array('file', [], PARAM_INT);
 
 $context = context_course::instance($courseid);
 $title = get_string('pluginname', 'local_listcoursefiles');
-$url = new moodle_url('/local/listcoursefiles/index.php',
-        array('courseid' => $courseid, 'page' => $page, 'limit' => $limit,
-              'component' => $component,  'filetype' => $filetype));
+$url = new moodle_url(
+    '/local/listcoursefiles/index.php',
+    [
+        'courseid' => $courseid,
+        'page' => $page,
+        'limit' => $limit,
+        'component' => $component,
+        'filetype' => $filetype,
+    ],
+);
 $PAGE->set_context($context);
 $PAGE->set_title($title);
 $PAGE->set_heading($title);

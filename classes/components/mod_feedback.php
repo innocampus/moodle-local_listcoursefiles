@@ -32,7 +32,7 @@ class mod_feedback extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         switch ($this->file->filearea) {
             case 'item':
             case 'page_after_submit':
@@ -49,7 +49,7 @@ class mod_feedback extends course_file {
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    protected function get_edit_url() : ?\moodle_url {
+    protected function get_edit_url(): ?\moodle_url {
         global $DB;
         switch ($this->file->filearea) {
             case 'item':
@@ -71,7 +71,7 @@ class mod_feedback extends course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         // File areas = intro, item, page_after_submit.
         global $DB;
         switch ($this->file->filearea) {

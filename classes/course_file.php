@@ -103,7 +103,7 @@ class course_file {
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    public static function create(\stdClass $file) : course_file {
+    public static function create(\stdClass $file): course_file {
         $classname = '\local_listcoursefiles\components\\' . $file->component;
         if (class_exists($classname)) {
             return new $classname($file);
@@ -154,7 +154,7 @@ class course_file {
      * Getter for filename
      * @return string
      */
-    protected function get_displayed_filename() : string {
+    protected function get_displayed_filename(): string {
         return $this->file->filename;
     }
 
@@ -175,7 +175,7 @@ class course_file {
      *
      * @return boolean whether file is allowed to be delivered to students
      */
-    protected function check_mimetype_license_expiry_date() : bool {
+    protected function check_mimetype_license_expiry_date(): bool {
         global $CFG, $COURSE;
 
         // Check if enabled/configured.
@@ -207,7 +207,7 @@ class course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         if ($this->file->filearea == 'intro') {
             return $this->get_standard_file_download_url();
         }
@@ -223,7 +223,7 @@ class course_file {
      * @return \moodle_url
      * @throws \moodle_exception
      */
-    protected function get_standard_file_download_url(bool $insertitemid = true) : \moodle_url {
+    protected function get_standard_file_download_url(bool $insertitemid = true): \moodle_url {
         $url = '/pluginfile.php/' . $this->file->contextid . '/' . $this->file->component . '/' . $this->file->filearea;
         if ($insertitemid) {
             $url .= '/' . $this->file->itemid;
@@ -238,7 +238,7 @@ class course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_component_url() : ?\moodle_url {
+    protected function get_component_url(): ?\moodle_url {
         if ($this->file->contextlevel == CONTEXT_MODULE) {
             $coursemodinfo = get_fast_modinfo($this->courseid);
             if (!empty($coursemodinfo->cms[$this->file->instanceid])) {
@@ -254,7 +254,7 @@ class course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         global $DB;
         $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
         switch ($component) {
@@ -291,7 +291,7 @@ class course_file {
      * @param string $filename
      * @return bool|null
      */
-    protected function is_embedded_file_used($record, string $field, string $filename) : ?bool {
+    protected function is_embedded_file_used($record, string $field, string $filename): ?bool {
         if ($record && property_exists($record, $field)) {
             return is_int(strpos($record->$field, '@@PLUGINFILE@@/' . rawurlencode($filename)));
         }
@@ -305,7 +305,7 @@ class course_file {
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    protected function get_edit_url() : ?\moodle_url {
+    protected function get_edit_url(): ?\moodle_url {
         global $DB;
         $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
         switch ($component) {

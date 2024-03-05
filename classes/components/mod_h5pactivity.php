@@ -33,7 +33,7 @@ class mod_h5pactivity extends course_file {
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    protected function get_edit_url() : ?\moodle_url {
+    protected function get_edit_url(): ?\moodle_url {
         global $DB;
         if ($this->file->filearea === 'package') {
             $sql = "SELECT cm.*
@@ -52,7 +52,7 @@ class mod_h5pactivity extends course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         // File areas = intro, package.
         if ($this->file->filearea === 'package') {
             return true;

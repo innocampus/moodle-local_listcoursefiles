@@ -32,7 +32,7 @@ class mod_assign extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         switch ($this->file->filearea) {
             case 'introattachment':
                 return $this->get_standard_file_download_url();
@@ -50,7 +50,7 @@ class mod_assign extends course_file {
      * @throws \dml_exception
      * @throws \moodle_exception
      */
-    protected function get_edit_url() : ?\moodle_url {
+    protected function get_edit_url(): ?\moodle_url {
         global $DB;
         if ($this->file->filearea === 'introattachment') {
             $sql = "SELECT cm.*
@@ -69,7 +69,7 @@ class mod_assign extends course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         // File areas = intro, introattachment.
         if ($this->file->filearea === 'introattachment') {
             return true;

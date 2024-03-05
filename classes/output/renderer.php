@@ -49,7 +49,7 @@ class renderer extends \plugin_renderer_base {
      * @throws \moodle_exception
      */
     public function overview_page(moodle_url $url, course_files $files, int $page, int $limit,
-            array $filelist, bool $changelicenseallowed, bool $downloadallowed) : string {
+            array $filelist, bool $changelicenseallowed, bool $downloadallowed): string {
         $tpldata = new \stdClass();
         $tpldata->course_selection_html = $this->get_course_selection($url, $files->get_course_id());
         $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(),
@@ -58,7 +58,7 @@ class renderer extends \plugin_renderer_base {
         $tpldata->paging_bar_html = $this->output->paging_bar($files->get_file_list_total_size(), $page , $limit, $url);
         $tpldata->url = $url;
         $tpldata->sesskey = sesskey();
-        $tpldata->files = array();
+        $tpldata->files = [];
         $tpldata->files_exist = count($filelist) > 0;
         $tpldata->change_license_allowed = $changelicenseallowed;
         $tpldata->download_allowed = $downloadallowed;
@@ -78,11 +78,11 @@ class renderer extends \plugin_renderer_base {
      * @return string
      * @throws \coding_exception
      */
-    public function get_course_selection(moodle_url $url, int $currentcourseid) : string {
+    public function get_course_selection(moodle_url $url, int $currentcourseid): string {
         $url = clone $url;
         $url->remove_params('courseid', 'page');
 
-        $availcourses = array();
+        $availcourses = [];
         $allcourses = enrol_get_my_courses();
         foreach ($allcourses as $course) {
             $context = \context_course::instance($course->id, IGNORE_MISSING);
@@ -102,7 +102,7 @@ class renderer extends \plugin_renderer_base {
      * @param string $currentcomponent
      * @return string
      */
-    public function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent) : string {
+    public function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent): string {
         $url = clone $url;
         $url->remove_params('page');
 
@@ -117,7 +117,7 @@ class renderer extends \plugin_renderer_base {
      * @return string
      * @throws \coding_exception
      */
-    public function get_file_type_selection(moodle_url $url, string $currenttype) : string {
+    public function get_file_type_selection(moodle_url $url, string $currenttype): string {
         $url = clone $url;
         $url->remove_params('page');
 

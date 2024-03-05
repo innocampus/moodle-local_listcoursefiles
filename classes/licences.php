@@ -44,7 +44,7 @@ class licences {
         global $CFG;
 
         if (self::$licenses === null) {
-            self::$licenses = array();
+            self::$licenses = [];
             $a = explode(',', $CFG->licenses);
             foreach ($a as $license) {
                 self::$licenses[$license] = \get_string($license, 'license');
@@ -66,9 +66,9 @@ class licences {
         if (self::$licenscolors === null) {
             self::get_available_licenses();
             $colorscfg = get_config('local_listcoursefiles', 'licensecolors');
-            $matches = array();
+            $matches = [];
             preg_match_all('@\s*(\S+)\s*([a-fA-F0-9]{6})\s*@', $colorscfg, $matches, PREG_SET_ORDER);
-            self::$licenscolors = array();
+            self::$licenscolors = [];
             foreach ($matches as $m) {
                 self::$licenscolors[$m[1]] = $m[2];
             }
@@ -76,7 +76,7 @@ class licences {
 
         $name = (isset(self::$licenses[$licenseshort])) ? self::$licenses[$licenseshort] : '';
         if (isset(self::$licenscolors[$licenseshort])) {
-            $name = \html_writer::tag('span', $name, array('style' => 'background-color: #' . self::$licenscolors[$licenseshort]));
+            $name = \html_writer::tag('span', $name, ['style' => 'background-color: #' . self::$licenscolors[$licenseshort]]);
         }
         return $name;
     }

@@ -26,34 +26,32 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
-    'local/listcoursefiles:view' => array(
+$capabilities = [
+    'local/listcoursefiles:view' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-    ),
-    'local/listcoursefiles:change_license' => array(
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/listcoursefiles:change_license' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-    ),
-    'local/listcoursefiles:download' => array(
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/listcoursefiles:download' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-    ),
-);
-
-
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+];

@@ -93,7 +93,7 @@ class course_files {
      *
      * @return int
      */
-    public function get_course_id() : int {
+    public function get_course_id(): int {
         return $this->courseid;
     }
 
@@ -102,7 +102,7 @@ class course_files {
      *
      * @return string
      */
-    public function get_filter_component() : string {
+    public function get_filter_component(): string {
         return $this->filtercomponent;
     }
 
@@ -111,7 +111,7 @@ class course_files {
      *
      * @return string
      */
-    public function get_filter_file_type() : string {
+    public function get_filter_file_type(): string {
         return $this->filterfiletype;
     }
 
@@ -164,11 +164,11 @@ class course_files {
         $sqlselectfiles = 'SELECT f.*, c.contextlevel, c.instanceid, ' . $usernameselect .
         ' ' . $sql . ' ORDER BY f.component, f.filename';
 
-        $params = array(
+        $params = [
             'path' => $this->context->path . '/%',
             'cid' => $this->context->id,
             'component' => $sqlwherecomponent,
-        );
+        ];
 
         $this->filelist = $DB->get_records_sql($sqlselectfiles, $params, $offset, $limit);
 
@@ -192,7 +192,7 @@ class course_files {
      */
     protected function get_sql_mimetype($types, $in) {
         if (is_array($types)) {
-            $list = array();
+            $list = [];
             foreach ($types as $type) {
                 $list = array_merge($list, mimetypes::get_mime_types()[$type]);
             }
@@ -237,19 +237,19 @@ class course_files {
                     AND (c.path LIKE :path OR c.id = :cid)
                 GROUP BY f.component';
 
-        $params = array('path' => $this->context->path . '/%', 'cid' => $this->context->id);
+        $params = ['path' => $this->context->path . '/%', 'cid' => $this->context->id];
         $ret = $DB->get_fieldset_sql($sql, $params);
 
-        $this->components = array();
+        $this->components = [];
         foreach ($ret as $r) {
             $this->components[$r] = self::get_component_translation($r);
         }
 
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
-        $componentsall = array(
+        $componentsall = [
             'all' => \get_string('all_files', 'local_listcoursefiles'),
             'all_wo_submissions' => \get_string('all_wo_submissions', 'local_listcoursefiles'),
-        );
+        ];
         $this->components = $componentsall + $this->components;
 
         return $this->components;
@@ -296,14 +296,14 @@ class course_files {
         $sql = 'UPDATE {files}
                 SET license = ?
                 WHERE id ' . $sqlin;
-        $DB->execute($sql, array_merge(array($license), $paramfids));
+        $DB->execute($sql, array_merge([$license], $paramfids));
 
         foreach ($checkedfileids as $fid) {
-            $event = event\license_changed::create(array(
+            $event = event\license_changed::create([
                 'context' => $this->context,
                 'objectid' => $fid,
-                'other' => array('license' => $license),
-            ));
+                'other' => ['license' => $license],
+            ]);
             $event->trigger();
         }
         $transaction->allow_commit();
@@ -321,7 +321,7 @@ class course_files {
         $thiscontextpath = $this->context->path . '/';
         $thiscontextpathlen = strlen($thiscontextpath);
         $thiscontextid = $this->context->id;
-        $checkedfiles = array();
+        $checkedfiles = [];
         foreach ($files as &$f) {
             if ($f->contextid == $thiscontextid || substr($f->path, 0, $thiscontextpathlen) === $thiscontextpath) {
                 $checkedfiles[] = $f;
@@ -360,7 +360,7 @@ class course_files {
 
         $checkedfiles = $this->check_files_context($res);
         $fs = get_file_storage();
-        $filesforzipping = array();
+        $filesforzipping = [];
         foreach ($checkedfiles as $file) {
             $fname = $this->download_get_unique_file_name($file->filename, $filesforzipping);
             $filesforzipping[$fname] = $fs->get_file_instance($file);
@@ -411,7 +411,7 @@ class course_files {
      * @throws \coding_exception
      */
     public static function get_file_types() {
-        $types = array('all' => \get_string('filetype_all', 'local_listcoursefiles'));
+        $types = ['all' => \get_string('filetype_all', 'local_listcoursefiles')];
         foreach (array_keys(mimetypes::get_mime_types()) as $type) {
             $types[$type] = \get_string('filetype_' . $type, 'local_listcoursefiles');
         }

@@ -32,7 +32,7 @@ class course extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         switch ($this->file->filearea) {
             case 'section':
                 return $this->get_standard_file_download_url();
@@ -51,7 +51,7 @@ class course extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_component_url() : ?\moodle_url {
+    protected function get_component_url(): ?\moodle_url {
         if ($this->file->component === 'contentbank') {
             return new \moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
         }
@@ -67,7 +67,7 @@ class course extends course_file {
      * @return \moodle_url|null
      * @throws \moodle_exception
      */
-    protected function get_edit_url() : ?\moodle_url {
+    protected function get_edit_url(): ?\moodle_url {
         if ($this->file->filearea === 'section') {
             return new \moodle_url('/course/editsection.php?', ['id' => $this->file->itemid]);
         }
@@ -83,7 +83,7 @@ class course extends course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         global $DB;
         switch ($this->file->filearea) {
             case 'section':

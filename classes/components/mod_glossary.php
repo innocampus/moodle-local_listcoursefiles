@@ -32,7 +32,7 @@ class mod_glossary extends course_file {
      * @return null|\moodle_url
      * @throws \moodle_exception
      */
-    protected function get_file_download_url() : ?\moodle_url {
+    protected function get_file_download_url(): ?\moodle_url {
         switch ($this->file->filearea) {
             case 'entry':
             case 'attachment':
@@ -48,7 +48,7 @@ class mod_glossary extends course_file {
      * @return bool|null
      * @throws \dml_exception
      */
-    protected function is_file_used() : ?bool {
+    protected function is_file_used(): ?bool {
         // File areas = intro, chapter.
         global $DB;
         switch ($this->file->filearea) {
