@@ -155,14 +155,14 @@ class course_files {
             $usernameselect = get_all_user_name_fields(true, 'u');
         }
 
-        $sql = 'FROM {files} f
-                LEFT JOIN {context} c ON (c.id = f.contextid)
-                LEFT JOIN {user} u ON (u.id = f.userid)
-                WHERE f.filename NOT LIKE \'.\'
-                    AND (c.path LIKE :path OR c.id = :cid) ' . $sqlwhere;
+        $sql = "FROM {files} f
+           LEFT JOIN {context} c ON (c.id = f.contextid)
+           LEFT JOIN {user} u ON (u.id = f.userid)
+               WHERE f.filename NOT LIKE '.'
+                     AND (c.path LIKE :path OR c.id = :cid) $sqlwhere";
 
-        $sqlselectfiles = 'SELECT f.*, c.contextlevel, c.instanceid, ' . $usernameselect .
-        ' ' . $sql . ' ORDER BY f.component, f.filename';
+        $sqlselectfiles = "SELECT f.*, c.contextlevel, c.instanceid, $usernameselect $sql
+                         ORDER BY f.component, f.filename";
 
         $params = [
             'path' => $this->context->path . '/%',
@@ -176,7 +176,7 @@ class course_files {
         if (count($this->filelist) < $limit) {
             $this->filescount = count($this->filelist) + $offset;
         } else {
-            $sqlcount = 'SELECT COUNT(*) ' . $sql;
+            $sqlcount = "SELECT COUNT(*) $sql";
             $this->filescount = $DB->count_records_sql($sqlcount, $params);
         }
 
@@ -230,12 +230,12 @@ class course_files {
             return $this->components;
         }
 
-        $sql = 'SELECT f.component
-                FROM {files} f
-                LEFT JOIN {context} c ON (c.id = f.contextid)
-                WHERE f.filename NOT LIKE \'.\'
-                    AND (c.path LIKE :path OR c.id = :cid)
-                GROUP BY f.component';
+        $sql = "SELECT f.component
+                  FROM {files} f
+             LEFT JOIN {context} c ON (c.id = f.contextid)
+                 WHERE f.filename NOT LIKE '.'
+                       AND (c.path LIKE :path OR c.id = :cid)
+              GROUP BY f.component";
 
         $params = ['path' => $this->context->path . '/%', 'cid' => $this->context->id];
         $ret = $DB->get_fieldset_sql($sql, $params);
@@ -280,10 +280,10 @@ class course_files {
 
         // Check if the given files really belong to the context.
         list($sqlin, $paramfids) = $DB->get_in_or_equal(array_keys($fileids), SQL_PARAMS_QM);
-        $sql = 'SELECT f.id, f.contextid, c.path
-                FROM {files} f
-                JOIN {context} c ON (c.id = f.contextid)
-                WHERE f.id ' . $sqlin;
+        $sql = "SELECT f.id, f.contextid, c.path
+                  FROM {files} f
+                  JOIN {context} c ON (c.id = f.contextid)
+                 WHERE f.id $sqlin";
         $res = $DB->get_records_sql($sql, $paramfids);
 
         $checkedfileids = array_column($this->check_files_context($res), 'id');
@@ -293,9 +293,7 @@ class course_files {
 
         list($sqlin, $paramfids) = $DB->get_in_or_equal($checkedfileids, SQL_PARAMS_QM);
         $transaction = $DB->start_delegated_transaction();
-        $sql = 'UPDATE {files}
-                SET license = ?
-                WHERE id ' . $sqlin;
+        $sql = "UPDATE {files} SET license = ? WHERE id $sqlin";
         $DB->execute($sql, array_merge([$license], $paramfids));
 
         foreach ($checkedfileids as $fid) {
@@ -351,11 +349,11 @@ class course_files {
         }
 
         list($sqlin, $paramfids) = $DB->get_in_or_equal(array_keys($fileids), SQL_PARAMS_QM);
-        $sql = 'SELECT f.*, c.path, r.repositoryid, r.reference, r.lastsync AS referencelastsync
-                FROM {files} f
-                LEFT JOIN {context} c ON (c.id = f.contextid)
-                LEFT JOIN {files_reference} r ON (f.referencefileid = r.id)
-                WHERE f.id ' . $sqlin;
+        $sql = "SELECT f.*, c.path, r.repositoryid, r.reference, r.lastsync AS referencelastsync
+                  FROM {files} f
+             LEFT JOIN {context} c ON (c.id = f.contextid)
+             LEFT JOIN {files_reference} r ON (f.referencefileid = r.id)
+                 WHERE f.id $sqlin";
         $res = $DB->get_records_sql($sql, $paramfids);
 
         $checkedfiles = $this->check_files_context($res);
