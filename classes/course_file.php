@@ -122,7 +122,7 @@ class course_file {
         global $COURSE;
         $this->courseid = $COURSE->id;
         $this->file = $file;
-        $this->filelicense = licences::get_license_name_color($file->license);
+        $this->filelicense = licences::get_license_name_color($file->license ?? '');
         $this->fileid = $file->id;
         $this->filesize = display_size($file->filesize);
         $this->filetype = mimetypes::get_file_type_translation($file->mimetype);

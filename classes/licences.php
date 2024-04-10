@@ -16,6 +16,15 @@
 
 namespace local_listcoursefiles;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->libdir . '/licenselib.php');
+
+use coding_exception;
+use dml_exception;
+use html_writer;
+use license_manager;
+
 /**
  * Class licences
  * @package local_listcoursefiles
@@ -25,58 +34,55 @@ namespace local_listcoursefiles;
  */
 class licences {
     /**
-     * @var null
+     * @var string[]|null
      */
-    static protected $licenses = null;
+    static protected ?array $licenses = null;
 
     /**
-     * @var null
+     * @var string[]|null
      */
-    static protected $licenscolors = null;
+    static protected ?array $licenscolors = null;
 
     /**
-     * Remember licences as array
+     * Returns an associative array of active licenses with short name keys and full name values.
      *
-     * @return array|null
-     * @throws \coding_exception
+     * Caches the array after the first call.
+     *
+     * @return string[]
+     * @throws coding_exception
      */
-    public static function get_available_licenses() {
-        global $CFG;
-
-        if (self::$licenses === null) {
-            self::$licenses = [];
-            $a = explode(',', $CFG->licenses);
-            foreach ($a as $license) {
-                self::$licenses[$license] = \get_string($license, 'license');
-            }
+    public static function get_available_licenses(): array {
+        if (is_null(self::$licenses)) {
+            self::$licenses = license_manager::get_active_licenses();
+            array_walk(
+                self::$licenses,
+                fn(object &$license, string $shortname) => $license = $license->fullname,
+            );
         }
-
         return self::$licenses;
     }
 
     /**
-     * Wraps license name in span element with background color as per plugin settings or
-     * retuns license name if no color set
+     * Returns full license name wrapped in an HTML `span` with its configured background color.
+     *
+     * If no color was set for the specified license, the full license name is returned as is.
+     * If no license with the specified `shortname` is available, an empty string is returned.
+     *
+     * Caches all configured license colors after the first call.
      *
      * @param string $licenseshort short name of a license
      * @return string full name of the license with HTML
      * @throws dml_exception|coding_exception
      */
-    public static function get_license_name_color($licenseshort) {
-        if (self::$licenscolors === null) {
-            self::get_available_licenses();
+    public static function get_license_name_color(string $licenseshort): string {
+        if (is_null(self::$licenscolors)) {
             $colorscfg = get_config('local_listcoursefiles', 'licensecolors');
-            $matches = [];
             preg_match_all('@\s*(\S+)\s*([a-fA-F0-9]{6})\s*@', $colorscfg, $matches, PREG_SET_ORDER);
-            self::$licenscolors = [];
-            foreach ($matches as $m) {
-                self::$licenscolors[$m[1]] = $m[2];
-            }
+            self::$licenscolors = array_combine(array_column($matches, 1), array_column($matches, 2));
         }
-
-        $name = (isset(self::$licenses[$licenseshort])) ? self::$licenses[$licenseshort] : '';
-        if (isset(self::$licenscolors[$licenseshort])) {
-            $name = \html_writer::tag('span', $name, ['style' => 'background-color: #' . self::$licenscolors[$licenseshort]]);
+        $name = self::get_available_licenses()[$licenseshort] ?? '';
+        if ($color = self::$licenscolors[$licenseshort] ?? null) {
+            $name = html_writer::tag('span', $name, ['style' => "background-color: #$color"]);
         }
         return $name;
     }
