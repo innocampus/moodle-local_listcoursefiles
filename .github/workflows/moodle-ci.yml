@@ -1,6 +1,23 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '**.php'
+      - '.github/workflows/*'
+      - 'db/*'
+      - 'templates/*'
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - '**.php'
+      - '.github/workflows/*'
+      - 'db/*'
+      - 'templates/*'
 
 jobs:
   test:
