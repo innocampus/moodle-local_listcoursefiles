@@ -61,15 +61,6 @@ class license_changed extends \core\event\base {
     }
 
     /**
-     * Does this event replace a legacy event?
-     *
-     * @return string legacy event name
-     */
-    public static function get_legacy_eventname() {
-        return null;
-    }
-
-    /**
      * Returns relevant URL.
      *
      * @return \moodle_url
