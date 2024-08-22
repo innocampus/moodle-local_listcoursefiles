@@ -222,6 +222,7 @@ class course_file {
      * @param bool $insertitemid
      * @return \moodle_url
      * @throws \moodle_exception
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     protected function get_standard_file_download_url(bool $insertitemid = true): \moodle_url {
         $url = '/pluginfile.php/' . $this->file->contextid . '/' . $this->file->component . '/' . $this->file->filearea;
