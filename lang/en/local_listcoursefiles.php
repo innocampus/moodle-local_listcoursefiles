@@ -32,7 +32,6 @@ $string['check_uncheck_all'] = 'Select all/none';
 $string['component'] = 'Component';
 $string['description'] = 'This page lists all files in the course. Please note that due to technical reasons not all files can be viewed from here.';
 $string['eventlicensechanged'] = 'License changed';
-$string['file_expired'] = 'This file is unavailable for students for copyright reasons.';
 $string['filename'] = 'File name';
 $string['filesize'] = 'File size';
 $string['filetype_all'] = 'All file types';

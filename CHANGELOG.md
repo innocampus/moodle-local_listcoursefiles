@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+- Add support for Moodle 4.5
+- Remove license expiration functionality
+
 ## 1.4.0
 
 - **Drop support for Moodle 3.9; require at least Moodle 4.1**

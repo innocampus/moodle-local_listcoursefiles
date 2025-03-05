@@ -61,11 +61,6 @@ class course_file {
     public $fileuploader = '';
 
     /**
-     * @var bool Is the license expired?
-     */
-    public $fileexpired = false;
-
-    /**
      * @var false|string
      */
     public $fileurl = false;
@@ -127,7 +122,6 @@ class course_file {
         $this->filesize = display_size($file->filesize);
         $this->filetype = mimetypes::get_file_type_translation($file->mimetype);
         $this->fileuploader = fullname($file);
-        $this->fileexpired = !$this->check_mimetype_license_expiry_date();
 
         $fileurl = $this->get_file_download_url();
         $this->fileurl = ($fileurl) ? $fileurl->out() : false;
@@ -156,49 +150,6 @@ class course_file {
      */
     protected function get_displayed_filename(): string {
         return $this->file->filename;
-    }
-
-    /**
-     * Check if a file with a specific license has expired.
-     *
-     * This checks if a file has been expired because:
-     *  - it is a document (has a particular mimetype),
-     *  - has been provided under a specific license
-     *  - and the expiry date is exceed (in respect of the course start date and the file creation time).
-     *
-     * The following settings need to be defined in the config.php:
-     *   array $CFG->fileexpirylicenses which licenses (shortnames) expire
-     *   int $CFG->fileexpirydate when do files expire (unix time)
-     *   array $CFG->filemimetypes['document'] mime types of documents
-     *
-     * These adjustments were made by Technische Universität Berlin in order to conform to § 52a UrhG.
-     *
-     * @return boolean whether file is allowed to be delivered to students
-     */
-    protected function check_mimetype_license_expiry_date(): bool {
-        global $CFG, $COURSE;
-
-        // Check if enabled/configured.
-        if (!isset($CFG->fileexpirydate, $CFG->fileexpirylicenses, $CFG->filemimetypes['document'])) {
-            return true;
-        }
-
-        if (in_array($this->file->license, $CFG->fileexpirylicenses)) {
-            $isdoc = false;
-            $fmimetype = $this->file->mimetype;
-            foreach ($CFG->filemimetypes['document'] as $mime) {
-                if ($mime === $fmimetype || (substr($mime, -1) === '%' && strncmp($mime, $fmimetype, strlen($mime) - 1) === 0)) {
-                    $isdoc = true;
-                    break;
-                }
-            }
-            $coursestart = $COURSE->startdate ?? 0;
-            if ($isdoc && $CFG->fileexpirydate > max($coursestart, $this->file->timecreated)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**

@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         php: ['7.4', '8.0', '8.1', '8.2']
-        moodle-branch: [MOODLE_401_STABLE, MOODLE_402_STABLE, MOODLE_403_STABLE, MOODLE_404_STABLE]
+        moodle-branch: [MOODLE_401_STABLE, MOODLE_402_STABLE, MOODLE_403_STABLE, MOODLE_404_STABLE, MOODLE_405_STABLE]
         database: [pgsql, mariadb]
         # See: https://moodledev.io/general/development/policies/php
         exclude:
@@ -58,10 +58,14 @@ jobs:
             moodle-branch: MOODLE_403_STABLE
           - php: '7.4'
             moodle-branch: MOODLE_404_STABLE
+          - php: '7.4'
+            moodle-branch: MOODLE_405_STABLE
           - php: '8.0'
             moodle-branch: MOODLE_403_STABLE
           - php: '8.0'
             moodle-branch: MOODLE_404_STABLE
+          - php: '8.0'
+            moodle-branch: MOODLE_405_STABLE
           - php: '8.2'
             moodle-branch: MOODLE_401_STABLE
 

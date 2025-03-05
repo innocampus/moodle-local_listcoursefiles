@@ -29,12 +29,6 @@
     padding-right: 0;
 }
 
-.local_listcoursefiles_file_expired img {
-    width: 12px;
-    height: auto;
-    margin-left: -2px;
-}
-
 .local_listcoursefiles_table .local_listcoursefiles_filecheckbox {
     margin: 0;
 }

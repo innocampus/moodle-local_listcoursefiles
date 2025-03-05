@@ -64,13 +64,6 @@ class mimetypes {
     ];
 
     /**
-     * mimetypes constructor.
-     */
-    public function __construct() {
-        self::check_config_mimetypes();
-    }
-
-    /**
      * Try to get the name of the file type in the user's lang
      *
      * @param string $mimetype
@@ -96,16 +89,5 @@ class mimetypes {
      */
     public static function get_mime_types() {
         return self::$mimetypes;
-    }
-
-    /**
-     * Check if the predefined list of mimetypes should be overridden.
-     */
-    public static function check_config_mimetypes() {
-        global $CFG;
-
-        if (isset($CFG->filemimetypes)) {
-            self::$mimetypes = $CFG->filemimetypes;
-        }
     }
 }

@@ -32,7 +32,6 @@ $string['check_uncheck_all'] = 'Alle/keine auswählen';
 $string['component'] = 'Komponente';
 $string['description'] = 'Diese Seite listet alle Dateien im Kurs auf. Hinweis: Nicht alle Dateien können von hier heruntergeladen werden.';
 $string['eventlicensechanged'] = 'Lizenz geändert';
-$string['file_expired'] = 'Diese Datei steht aus urheberrechtlichen Gründen den Teilnehmern nicht zur Verfügung.';
 $string['filename'] = 'Dateiname';
 $string['filesize'] = 'Größe';
 $string['filetype_all'] = 'Alle Dateitypen';
