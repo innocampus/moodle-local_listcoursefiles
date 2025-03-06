@@ -18,30 +18,28 @@ namespace local_listcoursefiles;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/licenselib.php');
+global $CFG;
+require_once("$CFG->libdir/licenselib.php");
 
-use coding_exception;
+use core\exception\coding_exception;
 use dml_exception;
 use html_writer;
 use license_manager;
 
 /**
- * Class licences
- * @package local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @author Jeremy FitzPatrick
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Provides a few utility functions for working with license names and colors.
+ *
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @author    Jeremy FitzPatrick
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class licences {
-    /**
-     * @var string[]|null
-     */
-    static protected ?array $licenses = null;
+    /** @var string[]|null Cache of available licenses indexed by the license short name. */
+    protected static array|null $licenses = null;
 
-    /**
-     * @var string[]|null
-     */
-    static protected ?array $licenscolors = null;
+    /** @var string[]|null Cache of defined license colors indexed by the license short name. */
+    protected static array|null $licenscolors = null;
 
     /**
      * Returns an associative array of active licenses with short name keys and full name values.
@@ -56,14 +54,14 @@ class licences {
             self::$licenses = license_manager::get_active_licenses();
             array_walk(
                 self::$licenses,
-                fn(object &$license, string $shortname) => $license = $license->fullname,
+                fn (object &$license, string $shortname) => $license = $license->fullname,
             );
         }
         return self::$licenses;
     }
 
     /**
-     * Returns full license name wrapped in an HTML `span` with its configured background color.
+     * Returns the full license name wrapped in an HTML `span` with its configured background color.
      *
      * If no color was set for the specified license, the full license name is returned as is.
      * If no license with the specified `shortname` is available, an empty string is returned.

@@ -16,12 +16,16 @@
 
 namespace local_listcoursefiles\components;
 
+use dml_exception;
 use local_listcoursefiles\course_file;
+use moodle_exception;
+use moodle_url;
 
 /**
  * Class course
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,15 +33,15 @@ class course extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_file_download_url(): ?\moodle_url {
+    protected function get_file_download_url(): ?moodle_url {
         switch ($this->file->filearea) {
             case 'section':
                 return $this->get_standard_file_download_url();
             case 'legacy':
-                return new \moodle_url('/file.php/' . $this->courseid . $this->file->filepath . $this->file->filename);
+                return new moodle_url('/file.php/' . $this->courseid . $this->file->filepath . $this->file->filename);
             case 'overviewfiles':
                 return $this->get_standard_file_download_url(false);
             default:
@@ -48,31 +52,31 @@ class course extends course_file {
     /**
      * Try to get the url for the component (module or course).
      *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url
+     * @throws moodle_exception
      */
-    protected function get_component_url(): ?\moodle_url {
+    protected function get_component_url(): moodle_url {
         if ($this->file->component === 'contentbank') {
-            return new \moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
+            return new moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
         }
         if ($this->file->filearea === 'section') {
-            return new \moodle_url('/course/view.php', ['id' => $this->courseid, 'sectionid' => $this->file->itemid]);
+            return new moodle_url('/course/view.php', ['id' => $this->courseid, 'sectionid' => $this->file->itemid]);
         }
-        return new \moodle_url('/course/info.php', ['id' => $this->courseid]);
+        return new moodle_url('/course/info.php', ['id' => $this->courseid]);
     }
 
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @return \moodle_url|null
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_edit_url(): ?\moodle_url {
+    protected function get_edit_url(): ?moodle_url {
         if ($this->file->filearea === 'section') {
-            return new \moodle_url('/course/editsection.php?', ['id' => $this->file->itemid]);
+            return new moodle_url('/course/editsection.php?', ['id' => $this->file->itemid]);
         }
         if ($this->file->filearea === 'overviewfiles' || $this->file->filearea === 'summary') {
-            return new \moodle_url('/course/edit.php?', ['id' => $this->courseid]);
+            return new moodle_url('/course/edit.php?', ['id' => $this->courseid]);
         }
         return parent::get_edit_url();
     }
@@ -81,7 +85,7 @@ class course extends course_file {
      * Checks if embedded files have been used
      *
      * @return bool|null
-     * @throws \dml_exception
+     * @throws dml_exception
      */
     protected function is_file_used(): ?bool {
         global $DB;

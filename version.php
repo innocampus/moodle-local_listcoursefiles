@@ -19,9 +19,11 @@
  *
  * This File contains information about the current version of local/listcoursefiles
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * {@noinspection PhpUndefinedVariableInspection}
  */
 
 defined('MOODLE_INTERNAL') || die;

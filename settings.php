@@ -17,17 +17,21 @@
 /**
  * Administration settings definitions for local listcoursefiles.
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * {@noinspection PhpUnhandledExceptionInspection}
  */
+
+use local_listcoursefiles\licences;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/local/listcoursefiles/lib.php');
+global $ADMIN, $CFG, $hassiteconfig;
 
 if ($hassiteconfig) {
-    $licenses = local_listcoursefiles\licences::get_available_licenses();
+    $licenses = licences::get_available_licenses();
     $licensenames = '';
     foreach ($licenses as $short => $full) {
         $licensenames .= "$full ($short), ";
@@ -43,4 +47,3 @@ if ($hassiteconfig) {
 
     $ADMIN->add('localplugins', $settings);
 }
-

@@ -17,20 +17,23 @@
 /**
  * The local_listcoursefiles license changed event.
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_listcoursefiles\event;
+
+use coding_exception;
+use core\event\base as event_base;
 
 /**
  * The local_listcoursefiles license changed event class.
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class license_changed extends \core\event\base {
+class license_changed extends event_base {
 
     /**
      * Init method.
@@ -46,7 +49,7 @@ class license_changed extends \core\event\base {
      *
      * @return string
      */
-    public function get_description() {
+    public function get_description(): string {
         return "The user with id '$this->userid' changed the license of file with id '$this->objectid' ".
         "to '" . $this->other['license'] . "'.";
     }
@@ -55,15 +58,16 @@ class license_changed extends \core\event\base {
      * Returns localised general event name.
      *
      * @return string
+     * @throws coding_exception
      */
-    public static function get_name() {
+    public static function get_name(): string {
         return get_string('eventlicensechanged', 'local_listcoursefiles');
     }
 
     /**
      * Returns relevant URL.
      *
-     * @return \moodle_url
+     * @return null
      */
     public function get_url() {
         return null;
