@@ -16,12 +16,16 @@
 
 namespace local_listcoursefiles\components;
 
+use dml_exception;
 use local_listcoursefiles\course_file;
+use moodle_exception;
+use moodle_url;
 
 /**
  * Class mod_forum
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,10 +33,10 @@ class mod_forum extends course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_file_download_url(): ?\moodle_url {
+    protected function get_file_download_url(): ?moodle_url {
         switch ($this->file->filearea) {
             case 'post':
             case 'attachment':
@@ -41,11 +45,12 @@ class mod_forum extends course_file {
                 return parent::get_file_download_url();
         }
     }
+
     /**
      * Checks if embedded files have been used
      *
      * @return bool|null
-     * @throws \dml_exception
+     * @throws dml_exception
      */
     protected function is_file_used(): ?bool {
         // File areas = intro, post.
