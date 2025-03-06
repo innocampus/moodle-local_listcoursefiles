@@ -16,49 +16,56 @@
 
 namespace local_listcoursefiles;
 
+use core_component;
+use dml_exception;
+use moodle_exception;
+use moodle_url;
+use stdClass;
+
 /**
  * Class course_file
- * @package local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @author     Jeremy FitzPatrick
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @author    Jeremy FitzPatrick
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_file {
     /**
-     * @var \stdClass
+     * @var stdClass
      */
-    protected $file;
+    protected stdClass $file;
 
     /**
      * @var int
      */
-    protected $courseid = 0;
+    protected int $courseid = 0;
 
     /* Properties used by the template. */
     /**
      * @var int
      */
-    public $fileid = 0;
+    public int $fileid = 0;
 
     /**
      * @var string
      */
-    public $filelicense = '';
+    public string $filelicense = '';
 
     /**
      * @var string Friendly readable size of the file (MB or kB as appropriate)
      */
-    public $filesize = '';
+    public string $filesize = '';
 
     /**
      * @var string
      */
-    public $filetype = '';
+    public string $filetype = '';
 
     /**
      * @var string The name of the person who uploaded the file.
      */
-    public $fileuploader = '';
+    public string $fileuploader = '';
 
     /**
      * @var false|string
@@ -68,7 +75,7 @@ class course_file {
     /**
      * @var string
      */
-    public $filename = '';
+    public string $filename = '';
 
     /**
      * @var false|string A link to the page where the file is used.
@@ -78,7 +85,7 @@ class course_file {
     /**
      * @var string
      */
-    public $filecomponent;
+    public string $filecomponent;
 
     /**
      * @var string|false A link to the page with the editor where the file was added.
@@ -88,17 +95,16 @@ class course_file {
     /**
      * @var string A message stating if the file is used or unknown.
      */
-    public $fileused;
+    public string $fileused;
 
     /**
      * Creates an object of this class or an appropriate subclass.
-     * @param \stdClass $file
+     *
+     * @param stdClass $file
      * @return course_file
-     * @throws \coding_exception
-     * @throws \dml_exception
-     * @throws \moodle_exception
+     * @throws moodle_exception
      */
-    public static function create(\stdClass $file): course_file {
+    public static function create(stdClass $file): course_file {
         $classname = '\local_listcoursefiles\components\\' . $file->component;
         if (class_exists($classname)) {
             return new $classname($file);
@@ -108,12 +114,11 @@ class course_file {
 
     /**
      * course_file constructor.
-     * @param \stdClass $file
-     * @throws \coding_exception
-     * @throws \dml_exception
-     * @throws \moodle_exception
+     *
+     * @param stdClass $file
+     * @throws moodle_exception
      */
-    public function __construct(\stdClass $file) {
+    public function __construct(stdClass $file) {
         global $COURSE;
         $this->courseid = $COURSE->id;
         $this->file = $file;
@@ -146,6 +151,7 @@ class course_file {
 
     /**
      * Getter for filename
+     *
      * @return string
      */
     protected function get_displayed_filename(): string {
@@ -155,10 +161,10 @@ class course_file {
     /**
      * Try to get the download url for a file.
      *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_file_download_url(): ?\moodle_url {
+    protected function get_file_download_url(): ?moodle_url {
         if ($this->file->filearea == 'intro') {
             return $this->get_standard_file_download_url();
         }
@@ -171,25 +177,25 @@ class course_file {
      * Most pluginfile urls are constructed the same way.
      *
      * @param bool $insertitemid
-     * @return \moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url
+     * @throws moodle_exception
      */
-    protected function get_standard_file_download_url(bool $insertitemid = true): \moodle_url {
+    protected function get_standard_file_download_url(bool $insertitemid = true): moodle_url {
         $url = '/pluginfile.php/' . $this->file->contextid . '/' . $this->file->component . '/' . $this->file->filearea;
         if ($insertitemid) {
             $url .= '/' . $this->file->itemid;
         }
         $url .= $this->file->filepath . $this->file->filename;
-        return new \moodle_url($url);
+        return new moodle_url($url);
     }
 
     /**
      * Try to get the url for the component (module or course).
      *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_component_url(): ?\moodle_url {
+    protected function get_component_url(): ?moodle_url {
         if ($this->file->contextlevel == CONTEXT_MODULE) {
             $coursemodinfo = get_fast_modinfo($this->courseid);
             if (!empty($coursemodinfo->cms[$this->file->instanceid])) {
@@ -203,7 +209,7 @@ class course_file {
      * Checks if embedded files have been used
      *
      * @return bool|null
-     * @throws \dml_exception
+     * @throws dml_exception
      */
     protected function is_file_used(): ?bool {
         global $DB;
@@ -211,7 +217,7 @@ class course_file {
         switch ($component) {
             case 'mod': // Course module.
                 $modname = str_replace('mod_', '', $this->file->component);
-                if (!array_key_exists($modname, \core_component::get_plugin_list('mod'))) {
+                if (!array_key_exists($modname, core_component::get_plugin_list('mod'))) {
                     return null;
                 }
                 if ($this->file->filearea === 'intro') {
@@ -237,7 +243,7 @@ class course_file {
     /**
      * Test if a file is embedded in text
      *
-     * @param \stdClass|false $record
+     * @param stdClass|false $record
      * @param string $field
      * @param string $filename
      * @return bool|null
@@ -252,11 +258,10 @@ class course_file {
     /**
      * Creates the URL for the editor where the file is added
      *
-     * @return \moodle_url|null
-     * @throws \dml_exception
-     * @throws \moodle_exception
+     * @return moodle_url|null
+     * @throws moodle_exception
      */
-    protected function get_edit_url(): ?\moodle_url {
+    protected function get_edit_url(): ?moodle_url {
         global $DB;
         $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
         switch ($component) {
@@ -267,12 +272,12 @@ class course_file {
                               JOIN {course_modules} cm ON cm.id = ctx.instanceid
                              WHERE ctx.id = ?";
                     $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
-                    return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+                    return new moodle_url('/course/modedit.php?', ['update' => $mod->id]);
                 }
                 break;
             case 'question':
             case 'qtype_essay':
-                return new \moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $this->file->itemid]);
+                return new moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $this->file->itemid]);
         }
         return null;
     }

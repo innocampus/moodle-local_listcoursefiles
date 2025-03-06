@@ -16,19 +16,21 @@
 
 namespace local_listcoursefiles;
 
+use coding_exception;
+
 /**
  * Class mimetypes
- * @package local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @author Jeremy FitzPatrick
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @author    Jeremy FitzPatrick
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mimetypes {
     /**
-     * Mapping of file types to possible mime types.
-     * @var array
+     * @var string[][] Mapping of file types to possible mime types.
      */
-    static protected $mimetypes = [
+    static protected array $mimetypes = [
         'document' => [
             'application/epub+zip',
             'application/msword',
@@ -67,27 +69,27 @@ class mimetypes {
      * Try to get the name of the file type in the user's lang
      *
      * @param string $mimetype
-     * @return \lang_string|string
-     * @throws \coding_exception
+     * @return string
+     * @throws coding_exception
      */
-    public static function get_file_type_translation($mimetype) {
+    public static function get_file_type_translation(string $mimetype): string {
         foreach (self::$mimetypes as $name => $types) {
             foreach ($types as $mime) {
                 if ($mime === $mimetype ||
                     (substr($mime, -1) === '%' && strncmp($mime, $mimetype, strlen($mime) - 1) === 0)) {
-                    return \get_string('filetype_' . $name, 'local_listcoursefiles');
+                    return get_string('filetype_' . $name, 'local_listcoursefiles');
                 }
             }
         }
-
         return $mimetype;
     }
 
     /**
      * Getter for mime types
-     * @return array|\string[][]
+     *
+     * @return string[][]
      */
-    public static function get_mime_types() {
+    public static function get_mime_types(): array {
         return self::$mimetypes;
     }
 }

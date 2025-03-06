@@ -17,16 +17,22 @@
 /**
  * Output rendering for the plugin.
  *
- * @package     local_listcoursefiles
- * @copyright   2022 Martin Gauk (@innoCampus, TU Berlin)
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2022 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_listcoursefiles\output;
 
+use coding_exception;
+use context_course;
+use html_writer;
+use moodle_exception;
 use moodle_url;
 use local_listcoursefiles\course_file;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\licences;
+use plugin_renderer_base;
+use stdClass;
 
 /**
  * Implements the plugin renderer
@@ -34,7 +40,7 @@ use local_listcoursefiles\licences;
  * @copyright 2022 Martin Gauk (@innoCampus, TU Berlin)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer extends \plugin_renderer_base {
+class renderer extends plugin_renderer_base {
     /**
      * Render overview page.
      *
@@ -46,11 +52,11 @@ class renderer extends \plugin_renderer_base {
      * @param bool $changelicenseallowed
      * @param bool $downloadallowed
      * @return string
-     * @throws \moodle_exception
+     * @throws moodle_exception
      */
     public function overview_page(moodle_url $url, course_files $files, int $page, int $limit,
             array $filelist, bool $changelicenseallowed, bool $downloadallowed): string {
-        $tpldata = new \stdClass();
+        $tpldata = new stdClass();
         $tpldata->course_selection_html = $this->get_course_selection($url, $files->get_course_id());
         $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(),
             $files->get_filter_component());
@@ -63,7 +69,7 @@ class renderer extends \plugin_renderer_base {
         $tpldata->change_license_allowed = $changelicenseallowed;
         $tpldata->download_allowed = $downloadallowed;
         $licenses = licences::get_available_licenses();
-        $tpldata->license_select_html = \html_writer::select($licenses, 'license');
+        $tpldata->license_select_html = html_writer::select($licenses, 'license');
         foreach ($filelist as $file) {
             $tpldata->files[] = course_file::create($file);
         }
@@ -76,7 +82,7 @@ class renderer extends \plugin_renderer_base {
      * @param moodle_url $url
      * @param int $currentcourseid
      * @return string
-     * @throws \coding_exception
+     * @throws coding_exception
      */
     public function get_course_selection(moodle_url $url, int $currentcourseid): string {
         $url = clone $url;
@@ -85,7 +91,7 @@ class renderer extends \plugin_renderer_base {
         $availcourses = [];
         $allcourses = enrol_get_my_courses();
         foreach ($allcourses as $course) {
-            $context = \context_course::instance($course->id, IGNORE_MISSING);
+            $context = context_course::instance($course->id, IGNORE_MISSING);
             if (has_capability('local/listcoursefiles:view', $context)) {
                 $availcourses[$course->id] = $course->shortname;
             }
@@ -115,7 +121,7 @@ class renderer extends \plugin_renderer_base {
      * @param moodle_url $url
      * @param string $currenttype
      * @return string
-     * @throws \coding_exception
+     * @throws coding_exception
      */
     public function get_file_type_selection(moodle_url $url, string $currenttype): string {
         $url = clone $url;

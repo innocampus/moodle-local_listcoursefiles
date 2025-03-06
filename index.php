@@ -17,12 +17,19 @@
 /**
  * List all files in a course.
  *
- * @package    local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * {@noinspection PhpUnhandledExceptionInspection}
  */
 
+use core\notification;
+use local_listcoursefiles\course_files;
+
 require_once(dirname(__FILE__) . '/../../config.php');
+
+global $OUTPUT, $PAGE;
 
 $courseid = required_param('courseid', PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
@@ -30,8 +37,8 @@ $limit = optional_param('limit', 200, PARAM_INT);
 if ($page < 0) {
     $page = 0;
 }
-if ($limit < 1 || $limit > local_listcoursefiles\course_files::MAX_FILES) {
-    $limit = local_listcoursefiles\course_files::MAX_FILES;
+if ($limit < 1 || $limit > course_files::MAX_FILES) {
+    $limit = course_files::MAX_FILES;
 }
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
@@ -62,7 +69,7 @@ require_capability('local/listcoursefiles:view', $context);
 $changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
 $downloadallowed = has_capability('local/listcoursefiles:download', $context);
 
-$files = new local_listcoursefiles\course_files($courseid, $context, $component, $filetype);
+$files = new course_files($courseid, $context, $component, $filetype);
 
 if ($action === 'change_license' && $changelicenseallowed) {
     require_sesskey();
@@ -70,18 +77,19 @@ if ($action === 'change_license' && $changelicenseallowed) {
     try {
         $files->set_files_license($chosenfiles, $license);
     } catch (moodle_exception $e) {
-        \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
+        notification::error($e->getMessage());
     }
 } else if ($action === 'download' && $downloadallowed) {
     require_sesskey();
     try {
         $files->download_files($chosenfiles);
     } catch (moodle_exception $e) {
-        \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
+        notification::error($e->getMessage());
     }
 }
 
 $filelist = $files->get_file_list($page * $limit, $limit);
+/** @var local_listcoursefiles\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_listcoursefiles');
 
 echo $OUTPUT->header();

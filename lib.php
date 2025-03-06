@@ -17,9 +17,9 @@
 /**
  * API of local listcoursefiles.
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
@@ -29,8 +29,10 @@
  * @param context $context
  * @throws coding_exception
  * @throws moodle_exception
+ *
+ * {@noinspection PhpUnused}
  */
-function local_listcoursefiles_extend_settings_navigation(settings_navigation $nav, $context) {
+function local_listcoursefiles_extend_settings_navigation(settings_navigation $nav, context $context): void {
     if ($context && ($context instanceof context_course || $context instanceof context_module)) {
         if (has_capability('local/listcoursefiles:view', $context) && $course = $nav->get('courseadmin')) {
             $url = new moodle_url(

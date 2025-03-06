@@ -17,70 +17,82 @@
 /**
  * Internal API of local listcoursefiles.
  *
- * @package    local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace local_listcoursefiles;
 
+use coding_exception;
+use context;
+use core_user\fields as user_fields;
+use course_modinfo;
+use dml_exception;
+use moodle_exception;
+use zip_packer;
+
 /**
  * Class course_files
- * @package local_listcoursefiles
+ *
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_files {
     /** @var int maximum number of files per page. */
     const MAX_FILES = 500;
 
     /**
-     * @var \context
+     * @var context
      */
-    protected $context;
+    protected context $context;
 
     /**
      * @var int
      */
-    protected $filescount = -1;
+    protected int $filescount = -1;
 
     /**
-     * @var array
+     * @var array|null
      */
-    protected $components = null;
+    protected ?array $components = null;
 
     /**
-     * @var array
+     * @var array|null
      */
-    protected $filelist = null;
-
-    /**
-     * @var string
-     */
-    protected $filtercomponent;
+    protected ?array $filelist = null;
 
     /**
      * @var string
      */
-    protected $filterfiletype;
+    protected string $filtercomponent;
 
     /**
-     * @var \course_modinfo
+     * @var string
      */
-    protected $coursemodinfo;
+    protected string $filterfiletype;
+
+    /**
+     * @var course_modinfo
+     */
+    protected course_modinfo $coursemodinfo;
 
     /**
      * @var int
      */
-    protected $courseid;
+    protected int $courseid;
 
     /**
      * course_files constructor.
-     * @param integer $courseid
-     * @param \context $context
+     *
+     * @param int $courseid
+     * @param context $context
      * @param string $component
      * @param string $filetype
-     * @throws \moodle_exception
+     * @throws moodle_exception
      */
-    public function __construct($courseid, \context $context, $component, $filetype) {
+    public function __construct(int $courseid, context $context, string $component, string $filetype) {
         $this->courseid = $courseid;
         $this->context = $context;
         $this->filtercomponent = $component;
@@ -121,8 +133,10 @@ class course_files {
      * @param int $offset
      * @param int $limit
      * @return array
+     * @throws coding_exception
+     * @throws dml_exception
      */
-    public function get_file_list($offset, $limit) {
+    public function get_file_list(int $offset, int $limit): array {
         global $DB;
 
         if ($this->filelist !== null) {
@@ -148,7 +162,7 @@ class course_files {
 
         $usernameselect = implode(', ', array_map(function($field) {
             return 'u.' . $field;
-        }, \core_user\fields::get_name_fields()));
+        }, user_fields::get_name_fields()));
 
         $sql = "FROM {files} f
            LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -181,11 +195,11 @@ class course_files {
     /**
      * Creates an SQL snippet
      *
-     * @param mixed $types
-     * @param boolean $in
+     * @param string|string[] $types
+     * @param bool $in
      * @return string
      */
-    protected function get_sql_mimetype($types, $in) {
+    protected function get_sql_mimetype($types, bool $in): string {
         if (is_array($types)) {
             $list = [];
             foreach ($types as $type) {
@@ -209,16 +223,21 @@ class course_files {
     /**
      * Returns the number of files in a component and with a specific file type.
      * May only be called after get_file_list.
+     *
+     * @return int
      */
-    public function get_file_list_total_size() {
+    public function get_file_list_total_size(): int {
         return $this->filescount;
     }
 
     /**
      * Get all available components with files.
+     *
      * @return array
+     * @throws coding_exception
+     * @throws dml_exception
      */
-    public function get_components() {
+    public function get_components(): array {
         global $DB;
 
         if ($this->components !== null) {
@@ -242,8 +261,8 @@ class course_files {
 
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
         $componentsall = [
-            'all' => \get_string('all_files', 'local_listcoursefiles'),
-            'all_wo_submissions' => \get_string('all_wo_submissions', 'local_listcoursefiles'),
+            'all' => get_string('all_files', 'local_listcoursefiles'),
+            'all_wo_submissions' => get_string('all_wo_submissions', 'local_listcoursefiles'),
         ];
         $this->components = $componentsall + $this->components;
 
@@ -255,18 +274,18 @@ class course_files {
      *
      * @param array $fileids keys are the file IDs
      * @param string $license shortname of the license
-     * @throws \moodle_exception
+     * @throws moodle_exception
      */
-    public function set_files_license($fileids, $license) {
+    public function set_files_license(array $fileids, string $license): void {
         global $DB;
 
         $licenses = licences::get_available_licenses();
         if (!isset($licenses[$license])) {
-            throw new \moodle_exception('invalid_license', 'local_listcoursefiles');
+            throw new moodle_exception('invalid_license', 'local_listcoursefiles');
         }
 
         if (count($fileids) > self::MAX_FILES) {
-            throw new \moodle_exception('too_many_files', 'local_listcoursefiles');
+            throw new moodle_exception('too_many_files', 'local_listcoursefiles');
         }
 
         if (count($fileids) == 0) {
@@ -274,7 +293,7 @@ class course_files {
         }
 
         // Check if the given files really belong to the context.
-        list($sqlin, $paramfids) = $DB->get_in_or_equal(array_keys($fileids), SQL_PARAMS_QM);
+        [$sqlin, $paramfids] = $DB->get_in_or_equal(array_keys($fileids));
         $sql = "SELECT f.id, f.contextid, c.path
                   FROM {files} f
                   JOIN {context} c ON (c.id = f.contextid)
@@ -286,7 +305,7 @@ class course_files {
             return;
         }
 
-        list($sqlin, $paramfids) = $DB->get_in_or_equal($checkedfileids, SQL_PARAMS_QM);
+        [$sqlin, $paramfids] = $DB->get_in_or_equal($checkedfileids);
         $transaction = $DB->start_delegated_transaction();
         $sql = "UPDATE {files} SET license = ? WHERE id $sqlin";
         $DB->execute($sql, array_merge([$license], $paramfids));
@@ -310,7 +329,8 @@ class course_files {
      * @param array $files array of stdClass as retrieved from the files and context table
      * @return array file ids that belong to the context
      */
-    protected function check_files_context(&$files) {
+    protected function check_files_context(array &$files): array {
+        // TODO: Remove unnecessary references.
         $thiscontextpath = $this->context->path . '/';
         $thiscontextpathlen = strlen($thiscontextpath);
         $thiscontextid = $this->context->id;
@@ -330,20 +350,21 @@ class course_files {
      * This function does not return if the zip archive could be created.
      *
      * @param array $fileids file ids
-     * @throws \moodle_exception
+     * @throws moodle_exception
      */
-    public function download_files(&$fileids) {
+    public function download_files(array &$fileids): void {
+        // TODO: Remove unnecessary references.
         global $DB, $CFG;
 
         if (count($fileids) > self::MAX_FILES) {
-            throw new \moodle_exception('too_many_files', 'local_listcoursefiles');
+            throw new moodle_exception('too_many_files', 'local_listcoursefiles');
         }
 
         if (count($fileids) == 0) {
-            throw new \moodle_exception('no_file_selected', 'local_listcoursefiles');
+            throw new moodle_exception('no_file_selected', 'local_listcoursefiles');
         }
 
-        list($sqlin, $paramfids) = $DB->get_in_or_equal(array_keys($fileids), SQL_PARAMS_QM);
+        [$sqlin, $paramfids] = $DB->get_in_or_equal(array_keys($fileids));
         $sql = "SELECT f.*, c.path, r.repositoryid, r.reference, r.lastsync AS referencelastsync
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -361,7 +382,7 @@ class course_files {
 
         $filename = clean_filename($this->coursemodinfo->get_course()->fullname . '.zip');
         $tmpfile = tempnam($CFG->tempdir . '/', 'local_listcoursefiles');
-        $zip = new \zip_packer();
+        $zip = new zip_packer();
         if ($zip->archive_to_pathname($filesforzipping, $tmpfile)) {
             send_temp_file($tmpfile, $filename);
         }
@@ -377,7 +398,8 @@ class course_files {
      * @param array $existingfiles
      * @return string unique file name
      */
-    protected function download_get_unique_file_name($filename, &$existingfiles) {
+    protected function download_get_unique_file_name(string $filename, array &$existingfiles): string {
+        // TODO: Remove unnecessary references.
         $name = clean_filename($filename);
 
         $lastdot = strrpos($name, '.');
@@ -400,15 +422,15 @@ class course_files {
     /**
      * Collate an array of available file types
      *
-     * @return array
-     * @throws \coding_exception
+     * @return string[]
+     * @throws coding_exception
      */
-    public static function get_file_types() {
-        $types = ['all' => \get_string('filetype_all', 'local_listcoursefiles')];
+    public static function get_file_types(): array {
+        $types = ['all' => get_string('filetype_all', 'local_listcoursefiles')];
         foreach (array_keys(mimetypes::get_mime_types()) as $type) {
-            $types[$type] = \get_string('filetype_' . $type, 'local_listcoursefiles');
+            $types[$type] = get_string('filetype_' . $type, 'local_listcoursefiles');
         }
-        $types['other'] = \get_string('filetype_other', 'local_listcoursefiles');
+        $types['other'] = get_string('filetype_other', 'local_listcoursefiles');
         return $types;
     }
 
@@ -416,14 +438,14 @@ class course_files {
      * Try to get the name of the file component in the user's lang.
      *
      * @param string $name
-     * @return \lang_string|string
-     * @throws \coding_exception
+     * @return string
+     * @throws coding_exception
      */
-    public static function get_component_translation($name) {
+    public static function get_component_translation(string $name): string {
         if (get_string_manager()->string_exists('pluginname', $name)) {
             return get_string('pluginname', $name);
         } else if (get_string_manager()->string_exists($name, '')) {
-            return get_string($name, '');
+            return get_string($name);
         }
         return $name;
     }
