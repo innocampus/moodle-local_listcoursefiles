@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0
+
+- Add support for Moodle 5
+
 ## 1.5.0
 
 - Add support for Moodle 4.5
