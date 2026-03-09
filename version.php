@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 $plugin->version   = 2025072200;
-$plugin->requires  = 2022112800;  // Require at least Moodle 4.1.0.
+$plugin->requires  = 2025041400;  // Require at least Moodle 5.0.
 $plugin->cron      = 0;
 $plugin->component = "local_listcoursefiles";
 $plugin->maturity  = MATURITY_STABLE;
