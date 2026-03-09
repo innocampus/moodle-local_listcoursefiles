@@ -66,7 +66,7 @@ $files = new local_listcoursefiles\course_files($courseid, $context, $component,
 
 if ($action === 'change_license' && $changelicenseallowed) {
     require_sesskey();
-    $license = required_param('license', PARAM_ALPHAEXT);
+    $license = required_param('license', PARAM_NOTAGS);
     try {
         $files->set_files_license($chosenfiles, $license);
     } catch (moodle_exception $e) {
