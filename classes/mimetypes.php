@@ -91,8 +91,11 @@ class mimetypes {
      * @return Generator<string> MIME types and MIME type patterns.
      */
     public static function iter_all(): Generator {
-        foreach (self::$mimetypes as $types) {
-            yield from $types;
+        foreach (self::$mimetypes as $mimetypes) {
+            // Cannot use `yield from` here because that would not reset the keys from the subarrays.
+            foreach ($mimetypes as $mimetype) {
+                yield $mimetype;
+            }
         }
     }
 
