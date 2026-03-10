@@ -57,11 +57,10 @@ class renderer extends plugin_renderer_base {
     public function overview_page(moodle_url $url, course_files $files, int $page, int $limit,
             array $filelist, bool $changelicenseallowed, bool $downloadallowed): string {
         $tpldata = new stdClass();
-        $tpldata->course_selection_html = $this->get_course_selection($url, $files->get_course_id());
-        $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(),
-            $files->get_filter_component());
-        $tpldata->file_type_selection_html = $this->get_file_type_selection($url, $files->get_filter_file_type());
-        $tpldata->paging_bar_html = $this->output->paging_bar($files->get_file_list_total_size(), $page , $limit, $url);
+        $tpldata->course_selection_html = $this->get_course_selection($url, $files->courseid);
+        $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(), $files->component);
+        $tpldata->file_type_selection_html = $this->get_file_type_selection($url, $files->filetype);
+        $tpldata->paging_bar_html = $this->output->paging_bar($files->count(), $page , $limit, $url);
         $tpldata->url = $url;
         $tpldata->sesskey = sesskey();
         $tpldata->files = [];
@@ -127,7 +126,7 @@ class renderer extends plugin_renderer_base {
         $url = clone $url;
         $url->remove_params('page');
 
-        return $this->output->single_select($url, 'filetype', course_files::get_file_types(),
+        return $this->output->single_select($url, 'filetype', course_files::get_file_types_display_names(),
             $currenttype, null, 'filetypeselector');
     }
 }
