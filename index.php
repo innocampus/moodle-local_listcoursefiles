@@ -70,14 +70,9 @@ $PAGE->set_pagelayout('incourse');
 
 require_login($courseid);
 require_capability('local/listcoursefiles:view', $coursefiles->context);
-$changelicenseallowed = has_capability('local/listcoursefiles:change_license', $coursefiles->context);
-$downloadallowed = has_capability('local/listcoursefiles:download', $coursefiles->context);
-
 
 if ($action === 'change_license') {
-    if (!$changelicenseallowed) {
-        throw new required_capability_exception($coursefiles->context, 'local/listcoursefiles:change_license', 'nopermissions', '');
-    }
+    require_capability('local/listcoursefiles:change_license', $coursefiles->context);
     require_sesskey();
     $license = required_param('license', PARAM_NOTAGS);
     $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
@@ -87,9 +82,7 @@ if ($action === 'change_license') {
         notification::error($e->getMessage());
     }
 } else if ($action === 'download') {
-    if (!$downloadallowed) {
-        throw new required_capability_exception($coursefiles->context, 'local/listcoursefiles:download', 'nopermissions', '');
-    }
+    require_capability('local/listcoursefiles:download', $coursefiles->context);
     require_sesskey();
     $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
@@ -99,10 +92,9 @@ if ($action === 'change_license') {
     }
 }
 
-$filelist = $coursefiles->fetch();
 /** @var local_listcoursefiles\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_listcoursefiles');
 
 echo $OUTPUT->header();
-echo $renderer->overview_page($url, $coursefiles, $page, $limit, $filelist, $changelicenseallowed, $downloadallowed);
+echo $renderer->overview_page($url, $coursefiles, $page);
 echo $OUTPUT->footer();

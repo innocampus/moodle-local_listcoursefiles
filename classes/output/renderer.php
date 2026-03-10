@@ -15,18 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Output rendering for the plugin.
+ * Definition of the {@link \local_listcoursefiles\output\renderer} class.
  *
  * @package   local_listcoursefiles
  * @copyright 2022 Martin Gauk (@innoCampus, TU Berlin)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 namespace local_listcoursefiles\output;
 
-use coding_exception;
 use context_course;
+use core\exception\coding_exception;
+use core\exception\moodle_exception;
+use dml_exception;
 use html_writer;
-use moodle_exception;
 use moodle_url;
 use local_listcoursefiles\course_file;
 use local_listcoursefiles\course_files;
@@ -35,98 +37,119 @@ use plugin_renderer_base;
 use stdClass;
 
 /**
- * Implements the plugin renderer
+ * Provides the method to render the course files overview page.
  *
  * @copyright 2022 Martin Gauk (@innoCampus, TU Berlin)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends plugin_renderer_base {
     /**
-     * Render overview page.
+     * Returns the rendered overview page.
      *
-     * @param moodle_url $url
-     * @param course_files $files
-     * @param int $page
-     * @param int $limit
-     * @param array $filelist
-     * @param bool $changelicenseallowed
-     * @param bool $downloadallowed
-     * @return string
+     * @param moodle_url $url Form action URL.
+     * @param course_files $files Files to display.
+     * @param int $page Current page number.
+     * @return string Rendered HTML.
+     * @throws coding_exception
+     * @throws dml_exception
      * @throws moodle_exception
      */
-    public function overview_page(moodle_url $url, course_files $files, int $page, int $limit,
-            array $filelist, bool $changelicenseallowed, bool $downloadallowed): string {
-        $tpldata = new stdClass();
-        $tpldata->course_selection_html = $this->get_course_selection($url, $files->courseid);
-        $tpldata->component_selection_html = $this->get_component_selection($url, $files->get_components(), $files->component);
-        $tpldata->file_type_selection_html = $this->get_file_type_selection($url, $files->filetype);
-        $tpldata->paging_bar_html = $this->output->paging_bar($files->count(), $page , $limit, $url);
-        $tpldata->url = $url;
-        $tpldata->sesskey = sesskey();
-        $tpldata->files = [];
-        $tpldata->files_exist = count($filelist) > 0;
-        $tpldata->change_license_allowed = $changelicenseallowed;
-        $tpldata->download_allowed = $downloadallowed;
-        $licenses = licences::get_available_licenses();
-        $tpldata->license_select_html = html_writer::select($licenses, 'license');
-        foreach ($filelist as $file) {
-            $tpldata->files[] = course_file::create($file);
-        }
-        return $this->render_from_template('local_listcoursefiles/view', $tpldata);
+    public function overview_page(moodle_url $url, course_files $files, int $page): string {
+        $filelist = array_values(
+            array_map(fn (stdClass $file): course_file => course_file::create($file), $files->fetch())
+        );
+        $context = [
+            'course_selection_html' => $this->get_course_selection($url, $files->courseid),
+            'component_selection_html' => $this->get_component_selection($url, $files->get_components(), $files->component),
+            'file_type_selection_html' => $this->get_file_type_selection($url, $files->filetype),
+            'paging_bar_html' => $this->output->paging_bar($files->count(), $page, $files->limit, $url),
+            'url' => $url,
+            'sesskey' => sesskey(),
+            'files' => $filelist,
+            'files_exist' => count($filelist) > 0,
+            'change_license_allowed' => has_capability('local/listcoursefiles:change_license', $files->context),
+            'download_allowed' => has_capability('local/listcoursefiles:download', $files->context),
+            'license_select_html' => html_writer::select(licences::get_available_licenses(), 'license'),
+        ];
+        return $this->render_from_template('local_listcoursefiles/view', $context);
     }
 
     /**
-     * Builds the course select drop-down menu HTML snippet.
+     * Builds an HTML snippet for the course selection drop-down menu.
      *
-     * @param moodle_url $url
-     * @param int $currentcourseid
-     * @return string
+     * @param moodle_url $url Form action URL.
+     * @param int $currentcourseid Currently selected course ID.
+     * @return string HTML snippet.
      * @throws coding_exception
      */
-    public function get_course_selection(moodle_url $url, int $currentcourseid): string {
+    private function get_course_selection(moodle_url $url, int $currentcourseid): string {
         $url = clone $url;
         $url->remove_params('courseid', 'page');
-
-        $availcourses = [];
-        $allcourses = enrol_get_my_courses();
-        foreach ($allcourses as $course) {
-            $context = context_course::instance($course->id, IGNORE_MISSING);
-            if (has_capability('local/listcoursefiles:view', $context)) {
-                $availcourses[$course->id] = $course->shortname;
-            }
-        }
-
-        return $this->output->single_select($url, 'courseid', $availcourses, $currentcourseid, null, 'courseselector');
+        return $this->output->single_select(
+            url: $url,
+            name: 'courseid',
+            options: array_column(
+                array: array_filter(enrol_get_my_courses(), [self::class, 'can_view_course_files']),
+                column_key: 'shortname',
+                index_key: 'id',
+            ),
+            selected: $currentcourseid,
+            nothing: '',
+            formid: 'courseselector',
+        );
     }
 
     /**
-     * Builds the file component select drop-down menu HTML snippet.
+     * Checks whether the current user is permitted to view the files list for the specified course.
      *
-     * @param moodle_url $url
-     * @param array $allcomponents
-     * @param string $currentcomponent
-     * @return string
-     */
-    public function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent): string {
-        $url = clone $url;
-        $url->remove_params('page');
-
-        return $this->output->single_select($url, 'component', $allcomponents, $currentcomponent, null, 'componentselector');
-    }
-
-    /**
-     * Builds the file type select drop-down menu HTML snippet.
-     *
-     * @param moodle_url $url
-     * @param string $currenttype
-     * @return string
+     * @param stdClass $course Course object.
+     * @return bool `true`, if the course files page can be viewed, `false` otherwise.
      * @throws coding_exception
      */
-    public function get_file_type_selection(moodle_url $url, string $currenttype): string {
+    private static function can_view_course_files(stdClass $course): bool {
+        $context = context_course::instance($course->id, IGNORE_MISSING);
+        return $context && has_capability('local/listcoursefiles:view', $context);
+    }
+
+    /**
+     * Builds an HTML snippet for the component selection drop-down menu.
+     *
+     * @param moodle_url $url Form action URL.
+     * @param array $allcomponents All available components.
+     * @param string $currentcomponent Currently selected component.
+     * @return string HTML snippet.
+     */
+    private function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent): string {
         $url = clone $url;
         $url->remove_params('page');
+        return $this->output->single_select(
+            url: $url,
+            name: 'component',
+            options: $allcomponents,
+            selected: $currentcomponent,
+            nothing: '',
+            formid: 'componentselector',
+        );
+    }
 
-        return $this->output->single_select($url, 'filetype', course_files::get_file_types_display_names(),
-            $currenttype, null, 'filetypeselector');
+    /**
+     * Builds an HTML snippet for the file type selection drop-down menu.
+     *
+     * @param moodle_url $url Form action URL.
+     * @param string $currenttype Currently selected file type.
+     * @return string HTML snippet.
+     * @throws coding_exception
+     */
+    private function get_file_type_selection(moodle_url $url, string $currenttype): string {
+        $url = clone $url;
+        $url->remove_params('page');
+        return $this->output->single_select(
+            url: $url,
+            name: 'filetype',
+            options: course_files::get_file_types_display_names(),
+            selected: $currenttype,
+            nothing: '',
+            formid: 'filetypeselector',
+        );
     }
 }
