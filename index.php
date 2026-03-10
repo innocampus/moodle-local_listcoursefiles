@@ -43,9 +43,14 @@ if ($limit < 1 || $limit > course_files::MAX_FILES) {
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
 $filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
-$chosenfiles = optional_param_array('file', [], PARAM_INT);
 
-$context = context_course::instance($courseid);
+$coursefiles = new course_files(
+    courseid: $courseid,
+    component: $component,
+    filetype: $filetype,
+    offset: $page * $limit,
+    limit: $limit,
+);
 $title = get_string('pluginname', 'local_listcoursefiles');
 $url = new moodle_url(
     '/local/listcoursefiles/index.php',
@@ -57,41 +62,47 @@ $url = new moodle_url(
         'filetype' => $filetype,
     ],
 );
-$PAGE->set_context($context);
+$PAGE->set_context($coursefiles->context);
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('incourse');
 
-
 require_login($courseid);
-require_capability('local/listcoursefiles:view', $context);
-$changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
-$downloadallowed = has_capability('local/listcoursefiles:download', $context);
+require_capability('local/listcoursefiles:view', $coursefiles->context);
+$changelicenseallowed = has_capability('local/listcoursefiles:change_license', $coursefiles->context);
+$downloadallowed = has_capability('local/listcoursefiles:download', $coursefiles->context);
 
-$files = new course_files($courseid, $context, $component, $filetype);
 
-if ($action === 'change_license' && $changelicenseallowed) {
+if ($action === 'change_license') {
+    if (!$changelicenseallowed) {
+        throw new required_capability_exception($coursefiles->context, 'local/listcoursefiles:change_license', 'nopermissions', '');
+    }
     require_sesskey();
     $license = required_param('license', PARAM_NOTAGS);
+    $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $files->set_files_license($chosenfiles, $license);
+        $coursefiles->set_files_license($license, ...$chosenfiles);
     } catch (moodle_exception $e) {
         notification::error($e->getMessage());
     }
-} else if ($action === 'download' && $downloadallowed) {
+} else if ($action === 'download') {
+    if (!$downloadallowed) {
+        throw new required_capability_exception($coursefiles->context, 'local/listcoursefiles:download', 'nopermissions', '');
+    }
     require_sesskey();
+    $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $files->download_files($chosenfiles);
+        $coursefiles->download_files(...$chosenfiles);
     } catch (moodle_exception $e) {
         notification::error($e->getMessage());
     }
 }
 
-$filelist = $files->get_file_list($page * $limit, $limit);
+$filelist = $coursefiles->fetch();
 /** @var local_listcoursefiles\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_listcoursefiles');
 
 echo $OUTPUT->header();
-echo $renderer->overview_page($url, $files, $page, $limit, $filelist, $changelicenseallowed, $downloadallowed);
+echo $renderer->overview_page($url, $coursefiles, $page, $limit, $filelist, $changelicenseallowed, $downloadallowed);
 echo $OUTPUT->footer();

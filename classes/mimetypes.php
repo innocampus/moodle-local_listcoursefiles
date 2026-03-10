@@ -17,6 +17,7 @@
 namespace local_listcoursefiles;
 
 use coding_exception;
+use Generator;
 
 /**
  * Class mimetypes
@@ -82,6 +83,17 @@ class mimetypes {
             }
         }
         return $mimetype;
+    }
+
+    /**
+     * Produces all available MIME types patterns.
+     *
+     * @return Generator<string> MIME types and MIME type patterns.
+     */
+    public static function iter_all(): Generator {
+        foreach (self::$mimetypes as $types) {
+            yield from $types;
+        }
     }
 
     /**
