@@ -15,7 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Administration settings definitions for local listcoursefiles.
+ * Plugin settings.
+ *
+ * @link https://moodledev.io/docs/apis/subsystems/admin Admin settings Moodle docs
  *
  * @package   local_listcoursefiles
  * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
@@ -28,22 +30,24 @@ use local_listcoursefiles\licences;
 
 defined('MOODLE_INTERNAL') || die();
 
-global $ADMIN, $CFG, $hassiteconfig;
+global $ADMIN, $hassiteconfig;
 
 if ($hassiteconfig) {
     $licenses = licences::get_available_licenses();
-    $licensenames = '';
-    foreach ($licenses as $short => $full) {
-        $licensenames .= "$full ($short), ";
-    }
-    $licensenames = substr($licensenames, 0, -2);
-
-    $settings = new admin_settingpage('local_listcoursefiles',
-            get_string('pluginname', 'local_listcoursefiles'), 'moodle/site:config');
-    $settings->add(new admin_setting_configtextarea('local_listcoursefiles/licensecolors',
-            get_string('license_colors', 'local_listcoursefiles'),
-            get_string('license_colors_desc', 'local_listcoursefiles', $licensenames),
-            ''));
-
+    array_walk($licenses, fn (string &$value, string $key) => $value .= " ($key)");
+    $settings = new admin_settingpage(
+        name: 'local_listcoursefiles',
+        visiblename: new lang_string('pluginname', 'local_listcoursefiles'),
+        req_capability: 'moodle/site:config',
+    );
+    $settings->add(
+        new admin_setting_configtextarea(
+            name: 'local_listcoursefiles/licensecolors',
+            visiblename: new lang_string('license_colors', 'local_listcoursefiles'),
+            description: new lang_string('license_colors_desc', 'local_listcoursefiles', implode(', ', $licenses)),
+            defaultsetting: '',
+        )
+    );
+    /** @var admin_root $ADMIN */
     $ADMIN->add('localplugins', $settings);
 }
