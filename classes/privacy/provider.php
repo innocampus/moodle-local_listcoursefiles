@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Privacy Subsystem implementation for local_listcoursefiles.
+ * Definition of the {@see \local_listcoursefiles\privacy\provider} class.
  *
  * @package    local_listcoursefiles
  * @copyright  2022 Martin Gauk (@innoCampus, TU Berlin)
@@ -24,20 +24,19 @@
 
 namespace local_listcoursefiles\privacy;
 
+use core_privacy\local\metadata\null_provider;
+
 /**
- * Privacy Subsystem for local_listcoursefiles implementing null_provider.
+ * Privacy Subsystem implementation for the plugin.
  *
+ * @link https://moodledev.io/docs/apis/subsystems/privacy Privacy API Moodle docs
+ *
+ * @package    local_listcoursefiles
  * @copyright  2022 Martin Gauk (@innoCampus, TU Berlin)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements \core_privacy\local\metadata\null_provider {
-
-    /**
-     * Get the language string identifier with the component's language
-     * file to explain why this plugin stores no data.
-     *
-     * @return  string
-     */
+class provider implements null_provider {
+    #[\Override]
     public static function get_reason(): string {
         return 'privacy:metadata';
     }
