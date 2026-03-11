@@ -67,7 +67,7 @@ class course_files {
      *
      * @param int $courseid ID of the course for which to manage the files.
      * @param string $component Name of the component by which to filter the files.
-     * @param string $filetype Type of the files by which to filter, such as `document`, `image` or `audio`.
+     * @param file_type|null $filetype Type of the files by which to filter.
      * @param int $offset Offset of the first file to return (for pagination purposes).
      * @param int $limit Maximum number of files to return (for pagination purposes).
      * @throws moodle_exception No course found with the given ID.
@@ -77,8 +77,8 @@ class course_files {
         public readonly int $courseid,
         /** @var string Name of the component by which the files are filtered. */
         public readonly string $component,
-        /** @var string Type by which the files are filtered, such as `document`, `image` or `audio`. */
-        public readonly string $filetype,
+        /** @var file_type|null Type by which the files are filtered. */
+        public readonly file_type|null $filetype = null,
         /** @var int Offset of the first file to be returned (for pagination purposes). */
         public readonly int $offset = 0,
         /** @var int Maximum number of files that will be returned (for pagination purposes). */
@@ -169,7 +169,7 @@ class course_files {
         }
         [$filtersql, $filterparams] = $this->get_sql_mimetype_filter();
         if ($filtersql !== '') {
-            $sqlwhere = "AND $filtersql";
+            $sqlwhere = "AND ($filtersql)";
             $params += $filterparams;
         }
         return [$sqlwhere, $params];
@@ -199,30 +199,30 @@ class course_files {
      * @return array{string, array<string, string>} SQL snippet and parameters.
      */
     private function get_sql_mimetype_filter(): array {
-        $groupedmimetypes = mimetypes::get_mime_types();
-        if ($this->filetype === 'other') {
-            // Construct an SQL fragment that matches all MIME types that are _not_ in the list of known MIME types.
-            $conditions = [];
-            $params = [];
-            foreach (mimetypes::iter_all() as $i => $mimetype) {
-                $conditions[] = "f.mimetype NOT LIKE :mimetype$i";
-                $params["mimetype$i"] = $mimetype;
-            }
-            $sql = implode(' AND ', $conditions);
-            return ["($sql)", $params];
+        if (is_null($this->filetype)) {
+            return ['', []];
         }
-        // TODO: Throw an exception, if the file type is unknown?
-        $mimetypes = $groupedmimetypes[$this->filetype] ?? [];
-        // Construct an SQL fragment that matches _any_ of the MIME types associated with the given file type.
-        // If the file type is not known, the expression will be empty and thus no filter will be applied.
+        if ($this->filetype === file_type::OTHER) {
+            // Construct an SQL fragment that matches all MIME types that are _not_ in the list of known MIME types.
+            $mimetypes = file_type::iter_all_mime_types();
+            [$oplike, $opequal] = ['NOT LIKE', '<>'];
+            $glue = ' AND ';
+        } else {
+            // Construct an SQL fragment that matches _any_ of the MIME types associated with the given file type.
+            // If the file type is not known, the expression will be empty and thus no filter will be applied.
+            $mimetypes = $this->filetype->get_mime_types();
+            [$oplike, $opequal] = ['LIKE', '='];
+            $glue = ' OR ';
+        }
         $conditions = [];
         $params = [];
-        foreach ($mimetypes as $i => $mimetype) {
-            $conditions[] = "f.mimetype LIKE :mimetype$i";
-            $params["mimetype$i"] = $mimetype;
+        foreach ($mimetypes as $i => $pattern) {
+            $op = str_ends_with($pattern, '%') ? $oplike : $opequal;
+            $conditions[] = "f.mimetype $op :mimetype$i";
+            $params["mimetype$i"] = $pattern;
         }
-        $sql = implode(' OR ', $conditions);
-        return [$sql ? "($sql)" : '', $params];
+        $sql = implode($glue, $conditions);
+        return [$sql, $params];
     }
 
     /**
@@ -378,21 +378,6 @@ class course_files {
             $name = "$filename($i)$extension";
         }
         return $name;
-    }
-
-    /**
-     * Returns all available file type names (translated).
-     *
-     * @return string[] Translated file type names indexed by file type.
-     * @throws coding_exception
-     */
-    public static function get_file_types_display_names(): array {
-        $types = ['all' => get_string('filetype_all', 'local_listcoursefiles')];
-        foreach (array_keys(mimetypes::get_mime_types()) as $type) {
-            $types[$type] = get_string("filetype_$type", 'local_listcoursefiles');
-        }
-        $types['other'] = get_string('filetype_other', 'local_listcoursefiles');
-        return $types;
     }
 
     /**

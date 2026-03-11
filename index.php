@@ -26,6 +26,7 @@
 
 use core\notification;
 use local_listcoursefiles\course_files;
+use local_listcoursefiles\file_type;
 
 require_once(dirname(__FILE__) . '/../../config.php');
 
@@ -47,7 +48,7 @@ $action = optional_param('action', '', PARAM_ALPHAEXT);
 $coursefiles = new course_files(
     courseid: $courseid,
     component: $component,
-    filetype: $filetype,
+    filetype: file_type::tryFrom($filetype), // TODO: Handle invalid filetype?
     offset: $page * $limit,
     limit: $limit,
 );
