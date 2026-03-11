@@ -218,7 +218,7 @@ class course_file {
             'filesizedisplay'  => display_size($this->filesize),
             'isuseddisplay'    => self::get_is_used_text($this->is_used()),
             'licensedisplay'   => licences::get_license_name_color($this->license ?? ''),
-            'typedisplay'      => mimetypes::get_file_type_translation($this->mimetype),
+            'typedisplay'      => $this->get_type_displayname(),
             'usernamedisplay'  => fullname($this->user),
             default            => throw new coding_exception("No such property: $name")
         };
@@ -240,8 +240,6 @@ class course_file {
 
     /**
      * Returns a name for the file for display purposes.
-     *
-     * **Subclasses for specific components may override this method.**
      *
      * @return string File name.
      */
@@ -345,5 +343,18 @@ class course_file {
      */
     protected function get_edit_url(): moodle_url|null {
         return null;
+    }
+
+    /**
+     * Returns the language string for the {@see filetype} associated with the file's MIME type.
+     *
+     * @see filetype::from_mime_type
+     * @see filetype::get_displayname
+     *
+     * @return lang_string|string Language string for the associated file type; just the MIME type string, if it is not supported.
+     */
+    private function get_type_displayname(): lang_string|string {
+        $filetype = filetype::from_mime_type($this->mimetype);
+        return $filetype === filetype::other ? $this->mimetype : $filetype->get_displayname();
     }
 }

@@ -26,6 +26,7 @@
 
 use core\notification;
 use local_listcoursefiles\course_files;
+use local_listcoursefiles\filetype;
 
 require_once(dirname(__FILE__) . '/../../config.php');
 
@@ -41,13 +42,13 @@ if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
 $component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
-$filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
+$filetype = optional_param('filetype', filetype::all->value, PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
 $coursefiles = new course_files(
     courseid: $courseid,
     component: $component,
-    filetype: $filetype,
+    filetype: filetype::from($filetype), // TODO: Handle invalid filetype more gracefully.
     offset: $page * $limit,
     limit: $limit,
 );
