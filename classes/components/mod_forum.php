@@ -16,53 +16,41 @@
 
 namespace local_listcoursefiles\components;
 
-use dml_exception;
-use local_listcoursefiles\course_file;
-use moodle_exception;
 use moodle_url;
 
 /**
- * Class mod_forum
+ * Represents a file uploaded in a forum module context.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_forum extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return moodle_url|null
-     * @throws moodle_exception
-     */
-    protected function get_file_download_url(): ?moodle_url {
-        switch ($this->file->filearea) {
-            case 'post':
-            case 'attachment':
-                return $this->get_standard_file_download_url();
-            default:
-                return parent::get_file_download_url();
-        }
+class mod_forum extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'attachment', 'post' => $this->get_standard_download_url(),
+            default              => parent::get_download_url(),
+        };
     }
 
-    /**
-     * Checks if embedded files have been used
-     *
-     * @return bool|null
-     * @throws dml_exception
-     */
-    protected function is_file_used(): ?bool {
-        // File areas = intro, post.
-        global $DB;
-        switch ($this->file->filearea) {
-            case 'post':
-                $post = $DB->get_record('forum_posts', ['id' => $this->file->itemid]);
-                return $this->is_embedded_file_used($post, 'message', $this->file->filename);
-            case 'attachment':
-                return true;
-            default:
-                return parent::is_file_used();
+    #[\Override]
+    protected function is_used(): bool|null {
+        if ($this->filearea === 'attachment') {
+            return true;
         }
+        // Parent implementation will check for embedding in the `post` or `intro` file area.
+        return parent::is_used();
+    }
+
+    #[\Override]
+    protected function get_embedding_context(): string|false {
+        global $DB;
+        if ($this->filearea === 'post') {
+            return $DB->get_field('forum_posts', 'message', ['id' => $this->itemid]);
+        }
+        // Parent implementation covers the `intro` file area.
+        return parent::get_embedding_context();
     }
 }

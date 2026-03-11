@@ -41,15 +41,17 @@
         "url"                      : "https://mymoodle.invalid/local/listcoursefiles/index.php?courseid=34",
         "sesskey"                  : "lDMLz7xAGt",
         "files"                    : [{
-                                        "filename"         : "my_picture.png",
-                                        "fileurl"          : "",
-                                        "filesize"         : "516.1KB",
-                                        "filecomponent"    : "Course",
-                                        "filecomponenturl" : "",
-                                        "filetype"         : "Image",
-                                        "filelicense"      : "Creative Commons - NoDerivs",
-                                        "fileuploader"     : "Admin User",
-                                        "fileused"         : "Yes"
+                                        "componentdisplay" : "Course",
+                                        "componenturl"     : "",
+                                        "displayname"      : "my_picture.png",
+                                        "downloadurl"      : "",
+                                        "editurl"          : "",
+                                        "filesizedisplay"  : "516.1KB",
+                                        "id"               : 42,
+                                        "isuseddisplay"    : "Yes",
+                                        "licensedisplay"   : "Creative Commons - NoDerivs",
+                                        "typedisplay"      : "Image",
+                                        "usernamedisplay"  : "Admin User"
                                      }],
         "files_exist"              : 3,
         "change_license_allowed"   : 1,
@@ -98,30 +100,30 @@
         {{#files}}
             <tr>
                 <td class="cell c0" style="text-align:left;">
-                    <input type="checkbox" class="local_listcoursefiles_filecheckbox" name="file[{{fileid}}]" />
+                    <input type="checkbox" class="local_listcoursefiles_filecheckbox" name="file[{{id}}]" />
                 </td>
                 <td class="cell c1">
-                    {{#fileurl}}
-                        <a href="{{{fileurl}}}">{{filename}}</a>
-                    {{/fileurl}}
-                    {{^fileurl}}
-                        {{filename}}
-                    {{/fileurl}}
+                    {{#downloadurl}}
+                        <a href="{{{downloadurl}}}">{{displayname}}</a>
+                    {{/downloadurl}}
+                    {{^downloadurl}}
+                        {{displayname}}
+                    {{/downloadurl}}
                 </td>
-                <td class="cell c2">{{filesize}}</td>
+                <td class="cell c2">{{filesizedisplay}}</td>
                 <td class="cell c3">
-                    {{#filecomponenturl}}
-                        <a href="{{{filecomponenturl}}}">{{filecomponent}}</a>
-                    {{/filecomponenturl}}
-                    {{^filecomponenturl}}
-                        {{filecomponent}}
-                    {{/filecomponenturl}}
-                    {{#fileediturl}}<a href="{{fileediturl}}"><i class="icon fa fa-cog fa-fw" aria-hidden="true"></i></a>{{/fileediturl}}
+                    {{#componenturl}}
+                        <a href="{{{componenturl}}}">{{componentdisplay}}</a>
+                    {{/componenturl}}
+                    {{^componenturl}}
+                        {{componentdisplay}}
+                    {{/componenturl}}
+                    {{#editurl}}<a href="{{editurl}}"><i class="icon fa fa-cog fa-fw" aria-hidden="true"></i></a>{{/editurl}}
                 </td>
-                <td class="cell c4">{{filetype}}</td>
-                <td class="cell c5">{{{filelicense}}}</td>
-                <td class="cell c6">{{fileuploader}}</td>
-                <td class="cell c7 lastcol"><span class="fileused">{{fileused}}</span></td>
+                <td class="cell c4">{{typedisplay}}</td>
+                <td class="cell c5">{{{licensedisplay}}}</td>
+                <td class="cell c6">{{usernamedisplay}}</td>
+                <td class="cell c7 lastcol"><span class="fileused">{{isuseddisplay}}</span></td>
             </tr>
         {{/files}}
     </table>

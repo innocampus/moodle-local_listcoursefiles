@@ -16,13 +16,13 @@
 
 namespace local_listcoursefiles\components;
 
+use core\exception\moodle_exception;
 use dml_exception;
 use local_listcoursefiles\course_file;
-use moodle_exception;
 use moodle_url;
 
 /**
- * Class course
+ * Represents a file uploaded in a course context.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
@@ -30,76 +30,58 @@ use moodle_url;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return moodle_url|null
-     * @throws moodle_exception
-     */
-    protected function get_file_download_url(): ?moodle_url {
-        switch ($this->file->filearea) {
-            case 'section':
-                return $this->get_standard_file_download_url();
-            case 'legacy':
-                return new moodle_url('/file.php/' . $this->courseid . $this->file->filepath . $this->file->filename);
-            case 'overviewfiles':
-                return $this->get_standard_file_download_url(false);
-            default:
-                return parent::get_file_download_url();
-        }
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'legacy'        => new moodle_url('/file.php/' . $this->courseid . $this->filepath . $this->filename),
+            'overviewfiles' => $this->get_standard_download_url(insertitemid: false),
+            'section'       => $this->get_standard_download_url(),
+            default         => parent::get_download_url(),
+        };
     }
 
-    /**
-     * Try to get the url for the component (module or course).
-     *
-     * @return moodle_url
-     * @throws moodle_exception
-     */
+    #[\Override]
     protected function get_component_url(): moodle_url {
-        if ($this->file->component === 'contentbank') {
-            return new moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
-        }
-        if ($this->file->filearea === 'section') {
-            return new moodle_url('/course/view.php', ['id' => $this->courseid, 'sectionid' => $this->file->itemid]);
+        if ($this->filearea === 'section') {
+            return new moodle_url('/course/view.php', ['id' => $this->courseid, 'sectionid' => $this->itemid]);
         }
         return new moodle_url('/course/info.php', ['id' => $this->courseid]);
     }
 
     /**
-     * Creates the URL for the editor where the file is added
+     * {@inheritDoc}
      *
-     * @return moodle_url|null
      * @throws moodle_exception
      */
-    protected function get_edit_url(): ?moodle_url {
-        if ($this->file->filearea === 'section') {
-            return new moodle_url('/course/editsection.php?', ['id' => $this->file->itemid]);
+    #[\Override]
+    protected function get_edit_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'overviewfiles', 'summary' => new moodle_url('/course/edit.php', ['id' => $this->courseid]),
+            'section'                  => new moodle_url('/course/editsection.php', ['id' => $this->itemid]),
+            default                    => parent::get_edit_url(),
+        };
+    }
+
+    #[\Override]
+    protected function is_used(): bool|null {
+        if ($this->filearea === 'overviewfiles') {
+            return true;
         }
-        if ($this->file->filearea === 'overviewfiles' || $this->file->filearea === 'summary') {
-            return new moodle_url('/course/edit.php?', ['id' => $this->courseid]);
-        }
-        return parent::get_edit_url();
+        return parent::is_used();
     }
 
     /**
-     * Checks if embedded files have been used
+     * {@inheritDoc}
      *
-     * @return bool|null
      * @throws dml_exception
      */
-    protected function is_file_used(): ?bool {
+    #[\Override]
+    protected function get_embedding_context(): string|false {
         global $DB;
-        switch ($this->file->filearea) {
-            case 'section':
-                $section = $DB->get_record('course_sections', ['id' => $this->file->itemid]);
-                return $this->is_embedded_file_used($section, 'summary', $this->file->filename);
-            case 'overviewfiles':
-                return true;
-            case 'summary':
-                $course = $DB->get_record('course', ['id' => $this->courseid]);
-                return $this->is_embedded_file_used($course, 'summary', $this->file->filename);
-            default:
-                return parent::is_file_used();
-        }
+        return match ($this->filearea) {
+            'section' => $DB->get_field('course_sections', 'summary', ['id' => $this->itemid]),
+            'summary' => $DB->get_field('course', 'summary', ['id' => $this->courseid]),
+            default   => parent::get_embedding_context(),
+        };
     }
 }

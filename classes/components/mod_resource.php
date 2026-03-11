@@ -16,63 +16,39 @@
 
 namespace local_listcoursefiles\components;
 
-use dml_exception;
-use local_listcoursefiles\course_file;
-use moodle_exception;
 use moodle_url;
 
 /**
- * Class mod_resource
+ * Represents a file uploaded in a resource module context.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_resource extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return moodle_url|null
-     * @throws moodle_exception
-     */
-    protected function get_file_download_url(): ?moodle_url {
-        if ($this->file->filearea === 'content') {
-            return $this->get_standard_file_download_url();
+class mod_resource extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        if ($this->filearea === 'content') {
+            return $this->get_standard_download_url();
         }
-        return parent::get_file_download_url();
+        return parent::get_download_url();
     }
 
-    /**
-     * Creates the URL for the editor where the file is added
-     *
-     * @return moodle_url|null
-     * @throws moodle_exception
-     */
-    protected function get_edit_url(): ?moodle_url {
-        global $DB;
-        if ($this->file->filearea === 'content') {
-            $sql = "SELECT cm.*
-                      FROM {context} ctx
-                      JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                     WHERE ctx.id = ?";
-            $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
-            return new moodle_url('/course/modedit.php?', ['update' => $mod->id]);
+    #[\Override]
+    protected function get_edit_url(): moodle_url|null {
+        if ($this->filearea === 'content') {
+            return $this->get_edit_url_from_context();
         }
         return parent::get_edit_url();
     }
 
-    /**
-     * Checks if embedded files have been used
-     *
-     * @return bool|null
-     * @throws dml_exception
-     */
-    protected function is_file_used(): ?bool {
-        // File areas = intro, chapter.
-        if ($this->file->filearea === 'content') {
+    #[\Override]
+    protected function is_used(): bool|null {
+        if ($this->filearea === 'content') {
             return true;
         }
-        return parent::is_file_used();
+        // Parent implementation will check for embedding in the `intro` file area.
+        return parent::is_used();
     }
 }

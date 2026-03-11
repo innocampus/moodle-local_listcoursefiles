@@ -16,14 +16,36 @@
 
 namespace local_listcoursefiles;
 
-use core_component;
+use core\exception\coding_exception;
+use core\exception\moodle_exception;
+use core\lang_string;
 use dml_exception;
-use moodle_exception;
+use local_listcoursefiles\components\mod;
 use moodle_url;
 use stdClass;
 
 /**
- * Class course_file
+ * Represents a file uploaded somewhere in a course.
+ *
+ * For specific contexts, this class may be extended to provide additional information about the file.
+ * The following methods may be overridden:
+ * - {@see get_component_url}
+ * - {@see get_displayname}
+ * - {@see get_download_url}
+ * - {@see get_edit_url}
+ * - {@see get_embedding_context}
+ * - {@see is_used}
+ *
+ * @property-read string $displayname Name of the file for display purposes.
+ * @property-read string|false $downloadurl URL to download the file.
+ * @property-read string|false $componenturl URL to the component the file was uploaded to.
+ * @property-read string|false $editurl URL to edit the component the file was uploaded to.
+ * @property-read string $isuseddisplay Text for whether an embedded file is used somewhere in the course.
+ * @property-read string $filesizedisplay Human-readable size of the file.
+ * @property-read string $typedisplay Human-readable type of the file.
+ * @property-read string $licensedisplay Name of the license.
+ * @property-read string $componentdisplay Name of the component.
+ * @property-read string $usernamedisplay Displayname of the person who uploaded the file.
  *
  * @package   local_listcoursefiles
  * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
@@ -31,254 +53,293 @@ use stdClass;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_file {
-    /**
-     * @var stdClass
-     */
-    protected stdClass $file;
+    /** @var string[] TODO Remove together with the {@see __get} method. */
+    private const DYNAMIC_PROPERTIES = [
+        'displayname',
+        'downloadurl',
+        'componenturl',
+        'editurl',
+        'isuseddisplay',
+        'filesizedisplay',
+        'typedisplay',
+        'licensedisplay',
+        'componentdisplay',
+        'usernamedisplay',
+    ];
+
+    /** @var stdClass Information about the user who uploaded the file. */
+    private readonly stdClass $user;
 
     /**
-     * @var int
-     */
-    protected int $courseid = 0;
-
-    /* Properties used by the template. */
-    /**
-     * @var int
-     */
-    public int $fileid = 0;
-
-    /**
-     * @var string
-     */
-    public string $filelicense = '';
-
-    /**
-     * @var string Friendly readable size of the file (MB or kB as appropriate)
-     */
-    public string $filesize = '';
-
-    /**
-     * @var string
-     */
-    public string $filetype = '';
-
-    /**
-     * @var string The name of the person who uploaded the file.
-     */
-    public string $fileuploader = '';
-
-    /**
-     * @var false|string
-     */
-    public $fileurl = false;
-
-    /**
-     * @var string
-     */
-    public string $filename = '';
-
-    /**
-     * @var false|string A link to the page where the file is used.
-     */
-    public $filecomponenturl = false;
-
-    /**
-     * @var string
-     */
-    public string $filecomponent;
-
-    /**
-     * @var string|false A link to the page with the editor where the file was added.
-     */
-    public $fileediturl = false;
-
-    /**
-     * @var string A message stating if the file is used or unknown.
-     */
-    public string $fileused;
-
-    /**
-     * Creates an object of this class or an appropriate subclass.
+     * Constructs a new instance of this class or an appropriate subclass from an untyped database record.
      *
-     * @param stdClass $file
+     * The record must have a property for every column in the `files` table, as well as a `contextlevel` and `instanceid`.
+     * All other properties are interpreted as fields of the joined `user` table.
+     *
+     * @param stdClass $record
+     * @param int $courseid
      * @return course_file
-     * @throws moodle_exception
      */
-    public static function create(stdClass $file): course_file {
-        $classname = '\local_listcoursefiles\components\\' . $file->component;
+    final public static function from_record(stdClass $record, int $courseid): course_file {
+        $classname = "\\local_listcoursefiles\\components\\$record->component";
         if (class_exists($classname)) {
-            return new $classname($file);
-        }
-        return new course_file($file);
-    }
-
-    /**
-     * course_file constructor.
-     *
-     * @param stdClass $file
-     * @throws moodle_exception
-     */
-    public function __construct(stdClass $file) {
-        global $COURSE;
-        $this->courseid = $COURSE->id;
-        $this->file = $file;
-        $this->filelicense = licences::get_license_name_color($file->license ?? '');
-        $this->fileid = $file->id;
-        $this->filesize = display_size($file->filesize);
-        $this->filetype = mimetypes::get_file_type_translation($file->mimetype);
-        $this->fileuploader = fullname($file);
-
-        $fileurl = $this->get_file_download_url();
-        $this->fileurl = ($fileurl) ? $fileurl->out() : false;
-        $this->filename = $this->get_displayed_filename();
-
-        $componenturl = $this->get_component_url();
-        $this->filecomponenturl = ($componenturl) ? $componenturl->out() : false;
-        $this->filecomponent = course_files::get_component_display_name($file->component);
-
-        $isused = $this->is_file_used();
-        if ($isused === true) {
-            $this->fileused = get_string('yes', 'core');
-        } else if ($isused === false) {
-            $this->fileused = get_string('no', 'core');
+            $class = $classname;
+        } else if (str_starts_with($record->component, 'mod_')) {
+            $class = mod::class;
         } else {
-            $this->fileused = get_string('nottested', 'local_listcoursefiles');
+            $class = self::class;
         }
-
-        $editurl = $this->get_edit_url();
-        $this->fileediturl = ($editurl) ? $editurl->out(false) : false;
+        return new $class(...(array) $record, courseid: $courseid);
     }
 
     /**
-     * Getter for filename
+     * Private constructor propagating almost all arguments to public readonly properties.
      *
-     * @return string
+     * Most of the arguments/properties match the columns of the `files` table. In addition, this expects the following:
+     * - {@see self::$contextlevel} from the joined `context` table.
+     * - {@see self::$instanceid} from the joined `context` table.
+     * - {@see self::$courseid} representing the course the file was uploaded in.
+     *
+     * Any additional named arguments are interpreted as fields of the joined `user` table, representing the uploader of the file.
+     *
+     * @param int $id ID of the file.
+     * @param string $contenthash Hash of the file content.
+     * @param string $pathnamehash Hash of the file path.
+     * @param int $contextid ID of the context the file is associated with.
+     * @param string $component The name of the component the file is associated with.
+     * @param string $filearea The name of the file area the file is associated with.
+     * @param int $itemid ID of the item the file is associated with.
+     * @param string $filepath Relative path to the file from the module content root.
+     * @param string $filename Full name of the file.
+     * @param int|null $userid ID of the user who uploaded the file.
+     * @param int $filesize Size of the file in bytes.
+     * @param string|null $mimetype MIME type of the file.
+     * @param int $status Status of the file; greater than 0 means something is wrong.
+     * @param string|null $source Source of the file, if imported from an external source.
+     * @param string|null $author Original author of the file.
+     * @param string|null $license License of the file.
+     * @param int $timecreated Timestamp when the file was uploaded.
+     * @param int $timemodified Timestamp when the file was last modified.
+     * @param int $sortorder Sorting order relative to other files.
+     * @param int|null $referencefileid ID of the repository file that this is a reference to, if any.
+     * @param int $contextlevel Level of the associated context (from the joined `context` table).
+     * @param int $instanceid ID of the associated instance (from the joined `context` table).
+     * @param int $courseid ID of the course the file was uploaded in.
+     * @param mixed ...$user Fields of the joined `user` table.
      */
-    protected function get_displayed_filename(): string {
-        return $this->file->filename;
+    final private function __construct(
+        /** @var int ID of the file. */
+        public readonly int $id,
+        /** @var string Hash of the file content. */
+        public readonly string $contenthash,
+        /** @var string Hash of the file path. */
+        public readonly string $pathnamehash,
+        /** @var int ID of the context the file is associated with. */
+        public readonly int $contextid,
+        /** @var string The name of the component the file is associated with. */
+        public readonly string $component,
+        /** @var string The name of the file area the file is associated with. */
+        public readonly string $filearea,
+        /** @var int ID of the item the file is associated with. */
+        public readonly int $itemid,
+        /** @var string Relative path to the file from the module content root. */
+        public readonly string $filepath,
+        /** @var string Full name of the file. */
+        public readonly string $filename,
+        /** @var int|null ID of the user who uploaded the file. */
+        public readonly int|null $userid,
+        /** @var int Size of the file in bytes. */
+        public readonly int $filesize,
+        /** @var string|null MIME type of the file. */
+        public readonly string|null $mimetype,
+        /** @var int Status of the file; greater than 0 means something is wrong. */
+        public readonly int $status,
+        /** @var string|null Source of the file, if imported from an external source. */
+        public readonly string|null $source,
+        /** @var string|null Original author of the file. */
+        public readonly string|null $author,
+        /** @var string|null License of the file. */
+        public readonly string|null $license,
+        /** @var int Timestamp when the file was uploaded. */
+        public readonly int $timecreated,
+        /** @var int Timestamp when the file was last modified. */
+        public readonly int $timemodified,
+        /** @var int Sorting order relative to other files. */
+        public readonly int $sortorder,
+        /** @var int|null ID of the repository file that this is a reference to, if any. */
+        public readonly int|null $referencefileid,
+        /** @var int Level of the associated context (from the joined `context` table). */
+        public readonly int $contextlevel,
+        /** @var int ID of the associated instance (from the joined `context` table). */
+        public readonly int $instanceid,
+        /** @var int ID of the course the file was uploaded in. */
+        public readonly int $courseid,
+        mixed ...$user,
+    ) {
+        $this->user = (object) $user;
     }
 
     /**
-     * Try to get the download url for a file.
+     * Required for the template engine to recognize the dynamic properties facilitated by the magic {@see __get} method.
      *
-     * @return moodle_url|null
+     * TODO Remove together with the {@see __get} method.
+     *
+     * @param string $name Name of the property to check.
+     * @return bool `true`, if the property exists, `false` otherwise.
+     */
+    public function __isset(string $name): bool {
+        return in_array($name, self::DYNAMIC_PROPERTIES);
+    }
+
+    /**
+     * Magic getter for the dynamic read-only properties.
+     *
+     * Exists mainly for rendering the overview template.
+     *
+     * TODO Replace this method with nice property `get`-hooks, once PHP 8.4+ becomes the minimum requirement.
+     *
+     * @param string $name Name of the property to get.
+     * @return string|false Value of the property.
+     * @throws coding_exception
+     * @throws dml_exception
      * @throws moodle_exception
      */
-    protected function get_file_download_url(): ?moodle_url {
-        if ($this->file->filearea == 'intro') {
-            return $this->get_standard_file_download_url();
+    public function __get(string $name): string|false {
+        return match ($name) {
+            'componentdisplay' => course_files::get_component_display_name($this->component),
+            'componenturl'     => $this->get_component_url()?->out() ?? false,
+            'displayname'      => $this->get_displayname(),
+            'downloadurl'      => $this->get_download_url()?->out() ?? false,
+            'editurl'          => $this->get_edit_url()?->out(escaped: false) ?? false,
+            'filesizedisplay'  => display_size($this->filesize),
+            'isuseddisplay'    => self::get_is_used_text($this->is_used()),
+            'licensedisplay'   => licences::get_license_name_color($this->license ?? ''),
+            'typedisplay'      => mimetypes::get_file_type_translation($this->mimetype),
+            'usernamedisplay'  => fullname($this->user),
+            default            => throw new coding_exception("No such property: $name")
+        };
+    }
+
+    /**
+     * Utility method for getting the text for whether a file is used or not.
+     *
+     * @param bool|null $used `true`, if the file is used; `false`, if it is not; `null` if it is not known.
+     * @return lang_string Text for whether the file is used or not.
+     */
+    private static function get_is_used_text(bool|null $used): lang_string {
+        return match ($used) {
+            true    => new lang_string('yes'),
+            false   => new lang_string('no'),
+            default => new lang_string('nottested', 'local_listcoursefiles'),
+        };
+    }
+
+    /**
+     * Returns a name for the file for display purposes.
+     *
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return string File name.
+     */
+    protected function get_displayname(): string {
+        return $this->filename;
+    }
+
+    /**
+     * Returns the direct download URL for the file.
+     *
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return moodle_url|null Download URL for the file; `null` if not found.
+     * @throws moodle_exception
+     */
+    protected function get_download_url(): moodle_url|null {
+        if ($this->filearea == 'intro') {
+            return $this->get_standard_download_url();
         }
         return null;
     }
 
     /**
-     * Get the standard download url for a file.
+     * Returns the standard download URL for a file.
      *
-     * Most pluginfile urls are constructed the same way.
+     * Most `pluginfile.php` URLs are constructed the same way.
      *
-     * @param bool $insertitemid
-     * @return moodle_url
+     * @param bool $insertitemid Whether to insert the `itemid` of the file into the URL.
+     * @return moodle_url Standard download URL for the file.
      * @throws moodle_exception
      */
-    protected function get_standard_file_download_url(bool $insertitemid = true): moodle_url {
-        $url = '/pluginfile.php/' . $this->file->contextid . '/' . $this->file->component . '/' . $this->file->filearea;
+    final protected function get_standard_download_url(bool $insertitemid = true): moodle_url {
+        $url = "/pluginfile.php/$this->contextid/$this->component/$this->filearea";
         if ($insertitemid) {
-            $url .= '/' . $this->file->itemid;
+            $url .= "/$this->itemid";
         }
-        $url .= $this->file->filepath . $this->file->filename;
+        $url .= $this->filepath . $this->filename;
         return new moodle_url($url);
     }
 
     /**
-     * Try to get the url for the component (module or course).
+     * Returns the URL to view the associated component.
      *
-     * @return moodle_url|null
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return moodle_url|null URL to the component; `null` if not applicable or not found.
      * @throws moodle_exception
      */
-    protected function get_component_url(): ?moodle_url {
-        if ($this->file->contextlevel == CONTEXT_MODULE) {
-            $coursemodinfo = get_fast_modinfo($this->courseid);
-            if (!empty($coursemodinfo->cms[$this->file->instanceid])) {
-                return $coursemodinfo->cms[$this->file->instanceid]->url;
+    protected function get_component_url(): moodle_url|null {
+        if ($this->contextlevel === CONTEXT_MODULE) {
+            $modinfo = get_fast_modinfo($this->courseid);
+            if (isset($modinfo->cms[$this->instanceid])) {
+                return $modinfo->cms[$this->instanceid]->url;
             }
         }
         return null;
     }
 
     /**
-     * Checks if embedded files have been used
+     * Checks if the file is currently used or embedded somewhere.
      *
-     * @return bool|null
-     * @throws dml_exception
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return bool|null `true`, if the file is used/embedded; `false`, if it is not; `null` if it is not known.
      */
-    protected function is_file_used(): ?bool {
-        global $DB;
-        $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
-        switch ($component) {
-            case 'mod': // Course module.
-                $modname = str_replace('mod_', '', $this->file->component);
-                if (!array_key_exists($modname, core_component::get_plugin_list('mod'))) {
-                    return null;
-                }
-                if ($this->file->filearea === 'intro') {
-                    $sql = "SELECT m.*
-                              FROM {context} ctx
-                              JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                              JOIN {{$modname}} m ON m.id = cm.instance
-                             WHERE ctx.id = ?";
-                    $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
-                    return $this->is_embedded_file_used($mod, 'intro', $this->file->filename);
-                }
-                break;
-            case 'question':
-                $question = $DB->get_record('question', ['id' => $this->file->itemid]);
-                return $this->is_embedded_file_used($question, $this->file->filearea, $this->file->filename);
-            case 'qtype_essay':
-                $question = $DB->get_record('qtype_essay_options', ['questionid' => $this->file->itemid]);
-                return $this->is_embedded_file_used($question, 'graderinfo', $this->file->filename);
+    protected function is_used(): bool|null {
+        $text = $this->get_embedding_context();
+        if ($text === false) {
+            return null;
         }
-        return null;
+        return $this->is_embedded_in($text);
     }
 
     /**
-     * Test if a file is embedded in text
+     * Returns the text that may contain the embedded file in the associated component.
      *
-     * @param stdClass|false $record
-     * @param string $field
-     * @param string $filename
-     * @return bool|null
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return string|false Text that may contain the embedded file; `false` if not embedded or the associated record was not found.
      */
-    protected function is_embedded_file_used($record, string $field, string $filename): ?bool {
-        if ($record && property_exists($record, $field)) {
-            return is_int(strpos($record->$field, '@@PLUGINFILE@@/' . rawurlencode($filename)));
-        }
-        return null;
+    protected function get_embedding_context(): string|false {
+        return false;
     }
 
     /**
-     * Creates the URL for the editor where the file is added
+     * Checks whether the given text contains the embedded file.
      *
-     * @return moodle_url|null
-     * @throws moodle_exception
+     * @param string $text Text to check.
+     * @return bool `true`, if the text contains the embedded file; `false`, if it does not.
      */
-    protected function get_edit_url(): ?moodle_url {
-        global $DB;
-        $component = strpos($this->file->component, 'mod_') === 0 ? 'mod' : $this->file->component;
-        switch ($component) {
-            case 'mod':
-                if ($this->file->filearea === 'intro') { // Just checking description for now.
-                    $sql = "SELECT cm.*
-                              FROM {context} ctx
-                              JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                             WHERE ctx.id = ?";
-                    $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
-                    return new moodle_url('/course/modedit.php?', ['update' => $mod->id]);
-                }
-                break;
-            case 'question':
-            case 'qtype_essay':
-                return new moodle_url('/question/question.php?', ['courseid' => $this->courseid, 'id' => $this->file->itemid]);
-        }
+    final protected function is_embedded_in(string $text): bool {
+        return str_contains($text, '@@PLUGINFILE@@/' . rawurlencode($this->filename));
+    }
+
+    /**
+     * Returns the URL for editing the associated component/area.
+     *
+     * **Subclasses for specific components may override this method.**
+     *
+     * @return moodle_url|null URL for editing; `null` if not applicable or not found.
+     */
+    protected function get_edit_url(): moodle_url|null {
         return null;
     }
 }
