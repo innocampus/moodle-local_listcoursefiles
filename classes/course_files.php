@@ -56,7 +56,7 @@ class course_files {
      */
     private array|null $components = null;
 
-    /** @var stdClass[]|null Cached array of files; `null` if not yet fetched. */
+    /** @var course_file[]|null Cached array of files; `null` if not yet fetched. */
     private array|null $filelist = null;
 
     /** @var int|null Cached total number of files; `null` if not yet counted. */
@@ -91,7 +91,7 @@ class course_files {
     /**
      * Retrieves the specified range of files within the course, matching the component and filetype filters.
      *
-     * @return stdClass[] Records representing the course files.
+     * @return course_file[] Records representing the course files.
      * @throws coding_exception
      * @throws dml_exception
      */
@@ -114,7 +114,11 @@ class course_files {
             'path' => "{$this->context->path}/%",
             'cid' => $this->context->id,
         ];
-        $this->filelist = $DB->get_records_sql($sql, $params, $this->offset, $this->limit);
+        $records = $DB->get_records_sql($sql, $params, $this->offset, $this->limit);
+        $this->filelist = array_map(
+            fn (stdClass $record): course_file => course_file::from_record($record, $this->courseid),
+            $records,
+        );
         return $this->filelist;
     }
 

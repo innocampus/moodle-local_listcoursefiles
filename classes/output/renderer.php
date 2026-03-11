@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Definition of the {@link \local_listcoursefiles\output\renderer} class.
+ * Definition of the {@see \local_listcoursefiles\output\renderer} class.
  *
  * @package   local_listcoursefiles
  * @copyright 2022 Martin Gauk (@innoCampus, TU Berlin)
@@ -30,7 +30,6 @@ use core\exception\moodle_exception;
 use dml_exception;
 use html_writer;
 use moodle_url;
-use local_listcoursefiles\course_file;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\licences;
 use plugin_renderer_base;
@@ -55,9 +54,7 @@ class renderer extends plugin_renderer_base {
      * @throws moodle_exception
      */
     public function overview_page(moodle_url $url, course_files $files, int $page): string {
-        $filelist = array_values(
-            array_map(fn (stdClass $file): course_file => course_file::create($file), $files->fetch())
-        );
+        $filelist = array_values($files->fetch());
         $context = [
             'course_selection_html' => $this->get_course_selection($url, $files->courseid),
             'component_selection_html' => $this->get_component_selection($url, $files->get_components(), $files->component),

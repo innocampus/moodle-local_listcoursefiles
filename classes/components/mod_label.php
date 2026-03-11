@@ -16,42 +16,38 @@
 
 namespace local_listcoursefiles\components;
 
-use local_listcoursefiles\course_file;
-use moodle_exception;
+use core\exception\moodle_exception;
+use dml_exception;
 use moodle_url;
 
 /**
- * Class mod_label
+ * Represents a file uploaded in a label module context.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_label extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return moodle_url
-     * @throws moodle_exception
-     */
-    protected function get_file_download_url(): moodle_url {
-        return $this->get_standard_file_download_url(false);
+class mod_label extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url {
+        return $this->get_standard_download_url(insertitemid: false);
     }
 
     /**
-     * Try to get the url for the component (module or course).
+     * {@inheritDoc}
      *
-     * @return moodle_url
+     * @throws dml_exception
      * @throws moodle_exception
      */
+    #[\Override]
     protected function get_component_url(): moodle_url {
         global $DB;
-        $sql = "SELECT cm.*
+        $sql = "SELECT cm.course, cm.section
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                 WHERE ctx.id = ?";
-        $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
+                 WHERE ctx.id = :contextid";
+        $mod = $DB->get_record_sql($sql, ['contextid' => $this->contextid]);
         return new moodle_url('/course/view.php', ['id' => $mod->course, 'sectionid' => $mod->section]);
     }
 }

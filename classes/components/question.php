@@ -16,31 +16,33 @@
 
 namespace local_listcoursefiles\components;
 
+use dml_exception;
+use local_listcoursefiles\course_file;
 use moodle_url;
 
 /**
- * Represents a file uploaded in a folder module context.
+ * Represents a file uploaded in a generic question context.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_folder extends mod {
+class question extends course_file {
+    /**
+     * {@inheritDoc}
+     *
+     * @throws dml_exception
+     */
     #[\Override]
-    protected function get_download_url(): moodle_url|null {
-        if ($this->filearea === 'content') {
-            return $this->get_standard_download_url();
-        }
-        return parent::get_download_url();
+    protected function get_embedding_context(): string|false {
+        global $DB;
+        $question = $DB->get_record('question', ['id' => $this->itemid]);
+        return $question?->{$this->filearea} ?? false;
     }
 
     #[\Override]
-    protected function is_used(): bool|null {
-        if ($this->filearea === 'content') {
-            return true;
-        }
-        // Parent implementation will check for embedding in the `intro` file area.
-        return parent::is_used();
+    protected function get_component_url(): moodle_url {
+        return new moodle_url('/question/question.php', ['courseid' => $this->courseid, 'id' => $this->itemid]);
     }
 }
