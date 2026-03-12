@@ -27,6 +27,7 @@ use coding_exception;
 use core\context\course as context_course;
 use core\event\base as event_base;
 use core\lang_string;
+use local_listcoursefiles\course_file;
 
 /**
  * Event for when a user changes the license of a file.
@@ -42,15 +43,15 @@ class license_changed extends event_base {
      * Properly typed constructor.
      *
      * @param context_course $context Context of the course the file belongs to.
-     * @param int $fileid ID of the file.
+     * @param course_file $file File that was changed.
      * @param string $license Short name of the license set for the file.
      * @return self New event instance.
      * @throws coding_exception
      */
-    public static function instance(context_course $context, int $fileid, string $license): self {
+    public static function instance(context_course $context, course_file $file, string $license): self {
         return self::create([
             'context' => $context,
-            'objectid' => $fileid,
+            'objectid' => $file->id,
             'other' => ['license' => $license],
         ]);
     }
