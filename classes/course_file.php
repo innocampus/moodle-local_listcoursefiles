@@ -217,7 +217,7 @@ class course_file {
             'editurl'          => $this->get_edit_url()?->out(escaped: false) ?? false,
             'filesizedisplay'  => display_size($this->filesize),
             'isuseddisplay'    => self::get_is_used_text($this->is_used()),
-            'licensedisplay'   => licences::get_license_name_color($this->license ?? ''),
+            'licensedisplay'   => licenses::get_license_name_color($this->license ?? ''),
             'typedisplay'      => $this->get_type_displayname(),
             'usernamedisplay'  => fullname($this->user),
             default            => throw new coding_exception("No such property: $name")
