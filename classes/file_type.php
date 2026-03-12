@@ -29,6 +29,7 @@ use core\lang_string;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 enum file_type: string {
+    case all = 'all';
     case document = 'document';
     case image = 'image';
     case audio = 'audio';
@@ -36,7 +37,6 @@ enum file_type: string {
     case archive = 'archive';
     case hvp = 'hvp';
     case other = 'other';
-    case all = 'all';
 
     /**
      * Returns a list of MIME types and MIME type patterns associated with the file type.
