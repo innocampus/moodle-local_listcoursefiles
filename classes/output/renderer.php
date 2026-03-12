@@ -141,7 +141,7 @@ class renderer extends plugin_renderer_base {
     private function get_file_type_selection(moodle_url $url, file_type|null $currenttype): string {
         $url = clone $url;
         $url->remove_params('page');
-        $options = ['all' => new lang_string('filetype_all', 'local_listcoursefiles')];
+        $options = ['all' => new lang_string('filetype:all', 'local_listcoursefiles')];
         foreach (file_type::cases() as $filetype) {
             $options[$filetype->value] = $filetype->get_displayname();
         }

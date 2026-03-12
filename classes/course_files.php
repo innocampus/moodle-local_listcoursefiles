@@ -183,7 +183,7 @@ class course_files {
      * @throws dml_exception
      */
     private function get_sql_component_filter(): array {
-        if ($this->component === 'all_wo_submissions') {
+        if ($this->component === 'all_without_submissions') {
             return ["f.component NOT LIKE :component", ['component' => 'assign%']];
         }
         if ($this->component !== 'all' && isset($this->get_components()[$this->component])) {
@@ -251,7 +251,7 @@ class course_files {
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
         $this->components = [
             'all' => get_string('all_files', 'local_listcoursefiles'),
-            'all_wo_submissions' => get_string('all_wo_submissions', 'local_listcoursefiles'),
+            'all_without_submissions' => get_string('all_without_submissions', 'local_listcoursefiles'),
         ] + $this->components;
         return $this->components;
     }
@@ -270,10 +270,10 @@ class course_files {
         $fileids = array_merge([$fileid], $fileids);
         $licenses = licences::get_available_licenses();
         if (!isset($licenses[$license])) {
-            throw new moodle_exception('invalid_license', 'local_listcoursefiles');
+            throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
         }
         if (count($fileids) > self::MAX_FILES) {
-            throw new moodle_exception('too_many_files', 'local_listcoursefiles');
+            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
         }
         // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
         [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
@@ -319,7 +319,7 @@ class course_files {
         global $CFG, $DB;
         $fileids = array_merge([$fileid], $fileids);
         if (count($fileids) > self::MAX_FILES) {
-            throw new moodle_exception('too_many_files', 'local_listcoursefiles');
+            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
         }
         // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
         [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');

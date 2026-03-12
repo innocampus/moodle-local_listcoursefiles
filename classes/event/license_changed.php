@@ -78,7 +78,7 @@ class license_changed extends event_base {
 
     #[\Override]
     public static function get_name(): lang_string {
-        return new lang_string('eventlicensechanged', 'local_listcoursefiles');
+        return new lang_string('event:license_changed', 'local_listcoursefiles');
     }
 
     #[\Override]

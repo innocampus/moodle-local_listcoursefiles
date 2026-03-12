@@ -87,7 +87,7 @@ enum file_type: string {
      * @return lang_string Language string for the display name.
      */
     public function get_displayname(): lang_string {
-        return new lang_string("filetype_$this->value", 'local_listcoursefiles');
+        return new lang_string("filetype:$this->value", 'local_listcoursefiles');
     }
 
     /**
