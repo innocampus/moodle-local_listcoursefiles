@@ -17,7 +17,6 @@
 namespace local_listcoursefiles;
 
 use core\lang_string;
-use Generator;
 
 /**
  * Supported file types.
@@ -30,22 +29,23 @@ use Generator;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 enum file_type: string {
-    case DOCUMENT = 'document';
-    case IMAGE = 'image';
-    case AUDIO = 'audio';
-    case VIDEO = 'video';
-    case ARCHIVE = 'archive';
-    case HVP = 'hvp';
-    case OTHER = 'other';
+    case document = 'document';
+    case image = 'image';
+    case audio = 'audio';
+    case video = 'video';
+    case archive = 'archive';
+    case hvp = 'hvp';
+    case other = 'other';
+    case all = 'all';
 
     /**
      * Returns a list of MIME types and MIME type patterns associated with the file type.
      *
-     * @return string[] List of MIME types/patterns; empty for the {@see self::OTHER} type.
+     * @return string[] List of MIME types/patterns; empty for the {@see self::other} type.
      */
     public function get_mime_types(): array {
         return match ($this) {
-            self::DOCUMENT => [
+            self::document => [
                 'application/epub+zip',
                 'application/msword',
                 'application/pdf',
@@ -65,10 +65,10 @@ enum file_type: string {
                 'spreadsheet',
                 'text/%',
             ],
-            self::IMAGE => ['image/%'],
-            self::AUDIO => ['audio/%'],
-            self::VIDEO => ['video/%'],
-            self::ARCHIVE => [
+            self::image => ['image/%'],
+            self::audio => ['audio/%'],
+            self::video => ['video/%'],
+            self::archive => [
                 'application/zip',
                 'application/x-tar',
                 'application/g-zip',
@@ -76,8 +76,14 @@ enum file_type: string {
                 'application/x-7z-compressed',
                 'application/vnd.moodle.backup',
             ],
-            self::HVP => ['application/zip.h5p'],
-            self::OTHER => [],
+            self::hvp => ['application/zip.h5p'],
+            self::other => [],
+            self::all => array_merge(
+                ...array_map(
+                    fn (self $case): array => $case->get_mime_types(),
+                    array_filter(self::cases(), fn (self $case): bool => $case !== self::all),
+                )
+            )
         };
     }
 
@@ -91,50 +97,33 @@ enum file_type: string {
     }
 
     /**
-     * Produces all supported MIME types and MIME type patterns.
-     *
-     * @return Generator<string> All supported MIME types (indexed contiguously).
-     */
-    public static function iter_all_mime_types(): Generator {
-        foreach (file_type::cases() as $filetype) {
-            // Cannot use `yield from` here because we want contiguous keys.
-            foreach ($filetype->get_mime_types() as $pattern) {
-                yield $pattern;
-            }
-        }
-    }
-
-    /**
      * Returns the file type associated with the given MIME type.
      *
      * @param string $mimetype MIME type to check.
-     * @return self File type case; {@see self::OTHER} if the MIME type is not supported.
+     * @return self File type case; {@see self::other} if the MIME type is not supported.
      */
     public static function from_mime_type(string $mimetype): self {
         foreach (self::cases() as $filetype) {
+            if ($filetype === self::all) {
+                continue;
+            }
             foreach ($filetype->get_mime_types() as $pattern) {
-                if (self::mime_type_matches_pattern($mimetype, $pattern)) {
+                if ($mimetype === $pattern || self::mime_type_matches_pattern($mimetype, $pattern)) {
                     return $filetype;
                 }
             }
         }
-        return self::OTHER;
+        return self::other;
     }
 
     /**
      * Checks if the given MIME type matches the given pattern.
-     *
-     * 1) If the MIME type is equal to the pattern, it is considered a match.
-     * 2) If the pattern ends with `%`, a corresponding prefix match is attempted.
      *
      * @param string $mimetype MIME type to check.
      * @param string $pattern Pattern to check against.
      * @return bool `true`, if the MIME type matches the pattern, `false` otherwise.
      */
     private static function mime_type_matches_pattern(string $mimetype, string $pattern): bool {
-        if ($mimetype === $pattern) {
-            return true;
-        }
         return str_ends_with($pattern, '%') && strncmp($pattern, $mimetype, strlen($pattern) - 1) === 0;
     }
 }

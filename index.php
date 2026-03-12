@@ -43,13 +43,13 @@ if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
 $component = optional_param('component', 'all_without_submissions', PARAM_ALPHANUMEXT);
-$filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
+$filetype = optional_param('filetype', file_type::all->value, PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
 $coursefiles = new course_files(
     courseid: $courseid,
     component: $component,
-    filetype: file_type::tryFrom($filetype), // TODO: Handle invalid filetype?
+    filetype: file_type::from($filetype), // TODO: Handle invalid filetype more gracefully.
     offset: $page * $limit,
     limit: $limit,
 );

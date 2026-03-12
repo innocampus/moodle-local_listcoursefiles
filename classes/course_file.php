@@ -351,6 +351,6 @@ class course_file {
      */
     private function get_type_displayname(): lang_string|string {
         $filetype = file_type::from_mime_type($this->mimetype);
-        return $filetype === file_type::OTHER ? $this->mimetype : $filetype->get_displayname();
+        return $filetype === file_type::other ? $this->mimetype : $filetype->get_displayname();
     }
 }

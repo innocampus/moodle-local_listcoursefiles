@@ -67,7 +67,7 @@ class course_files {
      *
      * @param int $courseid ID of the course for which to manage the files.
      * @param string $component Name of the component by which to filter the files.
-     * @param file_type|null $filetype Type of the files by which to filter.
+     * @param file_type $filetype Type of the files by which to filter.
      * @param int $offset Offset of the first file to return (for pagination purposes).
      * @param int $limit Maximum number of files to return (for pagination purposes).
      * @throws moodle_exception No course found with the given ID.
@@ -77,8 +77,8 @@ class course_files {
         public readonly int $courseid,
         /** @var string Name of the component by which the files are filtered. */
         public readonly string $component,
-        /** @var file_type|null Type by which the files are filtered. */
-        public readonly file_type|null $filetype = null,
+        /** @var file_type Type by which the files are filtered. */
+        public readonly file_type $filetype = file_type::all,
         /** @var int Offset of the first file to be returned (for pagination purposes). */
         public readonly int $offset = 0,
         /** @var int Maximum number of files that will be returned (for pagination purposes). */
@@ -199,12 +199,12 @@ class course_files {
      * @return array{string, array<string, string>} SQL snippet and parameters.
      */
     private function get_sql_mimetype_filter(): array {
-        if (is_null($this->filetype)) {
+        if ($this->filetype === file_type::all) {
             return ['', []];
         }
-        if ($this->filetype === file_type::OTHER) {
+        if ($this->filetype === file_type::other) {
             // Construct an SQL fragment that matches all MIME types that are _not_ in the list of known MIME types.
-            $mimetypes = file_type::iter_all_mime_types();
+            $mimetypes = file_type::all->get_mime_types();
             [$oplike, $opequal] = ['NOT LIKE', '<>'];
             $glue = ' AND ';
         } else {

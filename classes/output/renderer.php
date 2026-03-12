@@ -135,13 +135,13 @@ class renderer extends plugin_renderer_base {
      * Builds an HTML snippet for the file type selection drop-down menu.
      *
      * @param moodle_url $url Form action URL.
-     * @param file_type|null $currenttype Currently selected file type; `null` if no file type filter is selected.
+     * @param file_type $currenttype Currently selected file type.
      * @return string HTML snippet.
      */
-    private function get_file_type_selection(moodle_url $url, file_type|null $currenttype): string {
+    private function get_file_type_selection(moodle_url $url, file_type $currenttype): string {
         $url = clone $url;
         $url->remove_params('page');
-        $options = ['all' => new lang_string('filetype:all', 'local_listcoursefiles')];
+        $options = [];
         foreach (file_type::cases() as $filetype) {
             $options[$filetype->value] = $filetype->get_displayname();
         }
@@ -149,7 +149,7 @@ class renderer extends plugin_renderer_base {
             url: $url,
             name: 'filetype',
             options: $options,
-            selected: $currenttype?->value ?? 'all',
+            selected: $currenttype->value,
             nothing: '',
             formid: 'filetypeselector',
         );
