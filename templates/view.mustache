@@ -26,20 +26,19 @@
     * paging_bar_html          - HTML paging bar snippet from OUTPUT
     * url                      - Form post URL
     * sesskey                  - Sesskey string
-    * files                    - array of files.
-    * files_exist              - boolean
-    * change_license_allowed   - boolean, can the user change the file license
-    * download_allowed         - boolean, can the user download files
+    * files                    - Array of files to display
+    * files_exist              - Boolean, are there any files to display
+    * change_license_allowed   - Boolean, can the user change the file license
+    * download_allowed         - Boolean, can the user download files
     * license_select_html      - HTML snippet for license select drop-down menu
 
     Example context (json):
     {
-        "course_selection_html"    : "",
+        "change_license_allowed"   : 1,
         "component_selection_html" : "",
+        "course_selection_html"    : "",
+        "download_allowed"         : 1,
         "file_type_selection_html" : "",
-        "paging_bar_html"          : "",
-        "url"                      : "https://mymoodle.invalid/local/listcoursefiles/index.php?courseid=34",
-        "sesskey"                  : "lDMLz7xAGt",
         "files"                    : [{
                                         "componentdisplay" : "Course",
                                         "componenturl"     : "",
@@ -54,32 +53,33 @@
                                         "usernamedisplay"  : "Admin User"
                                      }],
         "files_exist"              : 3,
-        "change_license_allowed"   : 1,
-        "download_allowed"         : 1,
-        "license_select_html"      : ""
+        "license_select_html"      : "",
+        "paging_bar_html"          : "",
+        "sesskey"                  : "lDMLz7xAGt",
+        "url"                      : "https://mymoodle.invalid/local/listcoursefiles/index.php?courseid=34"
     }
 
 }}
 <div class="local_listcoursefiles_menu">
     <div class="local_listcoursefiles_selection">
-        {{#str}}mycourses{{/str}}: {{{course_selection_html}}}
+        {{#str}} mycourses {{/str}}: {{{course_selection_html}}}
     </div>
     <div class="local_listcoursefiles_selection">
-        {{#str}}filter_components,local_listcoursefiles{{/str}}: {{{component_selection_html}}}
+        {{#str}} filter_components, local_listcoursefiles {{/str}}: {{{component_selection_html}}}
     </div>
     <div class="local_listcoursefiles_selection">
-        {{#str}}filter_filetype,local_listcoursefiles{{/str}}: {{{file_type_selection_html}}}
+        {{#str}} filter_filetype, local_listcoursefiles {{/str}}: {{{file_type_selection_html}}}
     </div>
 </div>
 
 <div class="local_listcoursefiles_description">
-    {{#str}}description,local_listcoursefiles{{/str}}
+    {{#str}} description, local_listcoursefiles {{/str}}
 </div>
 
 {{#files_exist}}
     {{{paging_bar_html}}}
 
-    <a href="javascript:void(0);" class="local_listcoursefiles_check_uncheck_all">{{#str}}check_uncheck_all,local_listcoursefiles{{/str}}</a>
+    <a href="javascript:void(0);" class="local_listcoursefiles_check_uncheck_all">{{#str}} check_uncheck_all, local_listcoursefiles {{/str}}</a>
     <form action="{{{url}}}" method="post" id="filelist">
     <input name="sesskey" type="hidden" value="{{{sesskey}}}" />
 
@@ -87,13 +87,13 @@
         <thead>
             <tr>
                 <th class="header c0" scope="col"></th>
-                <th class="header c1" scope="col">{{#str}}filename,local_listcoursefiles{{/str}}</th>
-                <th class="header c2" scope="col">{{#str}}filesize,local_listcoursefiles{{/str}}</th>
-                <th class="header c3" scope="col">{{#str}}component,local_listcoursefiles{{/str}}</th>
-                <th class="header c4" scope="col">{{#str}}mimetype,local_listcoursefiles{{/str}}</th>
-                <th class="header c5" scope="col">{{#str}}license,local_listcoursefiles{{/str}}</th>
-                <th class="header c6" scope="col">{{#str}}uploader,local_listcoursefiles{{/str}}</th>
-                <th class="header c7 lastcol" scope="col">{{#str}}used,local_listcoursefiles{{/str}}</th>
+                <th class="header c1" scope="col">{{#str}} filename, local_listcoursefiles {{/str}}</th>
+                <th class="header c2" scope="col">{{#str}} filesize, local_listcoursefiles {{/str}}</th>
+                <th class="header c3" scope="col">{{#str}} component, local_listcoursefiles {{/str}}</th>
+                <th class="header c4" scope="col">{{#str}} mimetype, local_listcoursefiles {{/str}}</th>
+                <th class="header c5" scope="col">{{#str}} license, local_listcoursefiles {{/str}}</th>
+                <th class="header c6" scope="col">{{#str}} uploader, local_listcoursefiles {{/str}}</th>
+                <th class="header c7 lastcol" scope="col">{{#str}} used, local_listcoursefiles {{/str}}</th>
             </tr>
         </thead>
         <tbody>
@@ -134,14 +134,14 @@
         {{#download_allowed}}
             <div class="local_listcoursefiles_files_action">
                <button class="btn btn-secondary" type="submit" name="action" value="download">
-                    {{#str}}zip_download,local_listcoursefiles{{/str}}
+                    {{#str}} zip_download, local_listcoursefiles {{/str}}
                </button>
             </div>
         {{/download_allowed}}
         {{#change_license_allowed}}
             <div class="local_listcoursefiles_files_action">
                 <button class="btn btn-secondary" type="submit" name="action" value="change_license">
-                    {{#str}}change_license,local_listcoursefiles{{/str}}
+                    {{#str}} change_license, local_listcoursefiles {{/str}}
                 </button>
                 {{{license_select_html}}}
             </div>
@@ -153,7 +153,7 @@
 
 {{/files_exist}}
 {{^files_exist}}
-    <b>{{#str}}no_files_found,local_listcoursefiles{{/str}}</b>
+    <b>{{#str}} no_files_found, local_listcoursefiles {{/str}}</b>
 {{/files_exist}}
 
 
