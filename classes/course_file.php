@@ -342,15 +342,15 @@ class course_file {
     }
 
     /**
-     * Returns the language string for the {@see file_type} associated with the file's MIME type.
+     * Returns the language string for the {@see filetype} associated with the file's MIME type.
      *
-     * @see file_type::from_mime_type
-     * @see file_type::get_displayname
+     * @see filetype::from_mime_type
+     * @see filetype::get_displayname
      *
      * @return lang_string|string Language string for the associated file type; just the MIME type string, if it is not supported.
      */
     private function get_type_displayname(): lang_string|string {
-        $filetype = file_type::from_mime_type($this->mimetype);
-        return $filetype === file_type::other ? $this->mimetype : $filetype->get_displayname();
+        $filetype = filetype::from_mime_type($this->mimetype);
+        return $filetype === filetype::other ? $this->mimetype : $filetype->get_displayname();
     }
 }

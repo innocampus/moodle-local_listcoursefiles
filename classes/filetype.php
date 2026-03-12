@@ -28,7 +28,7 @@ use core\lang_string;
  * @author    Jeremy FitzPatrick
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-enum file_type: string {
+enum filetype: string {
     case all = 'all';
     case document = 'document';
     case image = 'image';

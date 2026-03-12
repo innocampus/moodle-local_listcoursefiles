@@ -27,7 +27,7 @@
 use core\exception\moodle_exception;
 use core\notification;
 use local_listcoursefiles\course_files;
-use local_listcoursefiles\file_type;
+use local_listcoursefiles\filetype;
 
 require_once(dirname(__FILE__) . '/../../config.php');
 
@@ -43,13 +43,13 @@ if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
 $component = optional_param('component', 'all_without_submissions', PARAM_ALPHANUMEXT);
-$filetype = optional_param('filetype', file_type::all->value, PARAM_ALPHAEXT);
+$filetype = optional_param('filetype', filetype::all->value, PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
 $coursefiles = new course_files(
     courseid: $courseid,
     component: $component,
-    filetype: file_type::from($filetype), // TODO: Handle invalid filetype more gracefully.
+    filetype: filetype::from($filetype), // TODO: Handle invalid filetype more gracefully.
     offset: $page * $limit,
     limit: $limit,
 );

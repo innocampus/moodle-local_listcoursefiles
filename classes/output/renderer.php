@@ -27,11 +27,10 @@ namespace local_listcoursefiles\output;
 use context_course;
 use core\exception\coding_exception;
 use core\exception\moodle_exception;
-use core\lang_string;
 use dml_exception;
 use html_writer;
 use local_listcoursefiles\course_files;
-use local_listcoursefiles\file_type;
+use local_listcoursefiles\filetype;
 use local_listcoursefiles\licences;
 use moodle_url;
 use plugin_renderer_base;
@@ -135,14 +134,14 @@ class renderer extends plugin_renderer_base {
      * Builds an HTML snippet for the file type selection drop-down menu.
      *
      * @param moodle_url $url Form action URL.
-     * @param file_type $currenttype Currently selected file type.
+     * @param filetype $currenttype Currently selected file type.
      * @return string HTML snippet.
      */
-    private function get_file_type_selection(moodle_url $url, file_type $currenttype): string {
+    private function get_file_type_selection(moodle_url $url, filetype $currenttype): string {
         $url = clone $url;
         $url->remove_params('page');
         $options = [];
-        foreach (file_type::cases() as $filetype) {
+        foreach (filetype::cases() as $filetype) {
             $options[$filetype->value] = $filetype->get_displayname();
         }
         return $this->output->single_select(
