@@ -41,7 +41,7 @@ if ($page < 0) {
 if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
-$component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
+$component = optional_param('component', 'all_without_submissions', PARAM_ALPHANUMEXT);
 $filetype = optional_param('filetype', filetype::all->value, PARAM_ALPHAEXT);
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
