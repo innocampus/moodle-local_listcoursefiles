@@ -43,13 +43,13 @@ if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
 $component = optional_param('component', 'all_without_submissions', PARAM_ALPHANUMEXT);
-$filetype = optional_param('filetype', filetype::all->value, PARAM_ALPHAEXT);
+$filetype = filetype::optional_param(); // TODO: Catch invalid filetype exception and display error notification?
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 
 $coursefiles = new course_files(
     courseid: $courseid,
     component: $component,
-    filetype: filetype::from($filetype), // TODO: Handle invalid filetype more gracefully.
+    filetype: $filetype,
     offset: $page * $limit,
     limit: $limit,
 );
@@ -61,7 +61,7 @@ $url = new moodle_url(
         'page' => $page,
         'limit' => $limit,
         'component' => $component,
-        'filetype' => $filetype,
+        'filetype' => $filetype->value,
     ],
 );
 $PAGE->set_context($coursefiles->context);

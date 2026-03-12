@@ -28,6 +28,7 @@ $string['change_license'] = 'Ändere Lizenz auf';
 $string['check_uncheck_all'] = 'Alle/keine auswählen';
 $string['component'] = 'Komponente';
 $string['description'] = 'Diese Seite listet alle Dateien im Kurs auf. Hinweis: Nicht alle Dateien können von hier heruntergeladen werden.';
+$string['error:invalid_filetype'] = 'Ungültiger Dateityp gegeben.';
 $string['error:invalid_license'] = 'Ungültige Lizenz gegeben.';
 $string['error:no_files_selected'] = 'Es wurde keine Datei ausgewählt.';
 $string['error:too_many_files'] = 'Zu viele Dateien gegeben';

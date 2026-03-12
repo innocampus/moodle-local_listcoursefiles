@@ -16,6 +16,7 @@
 
 namespace local_listcoursefiles;
 
+use core\exception\moodle_exception;
 use core\lang_string;
 
 /**
@@ -125,5 +126,21 @@ enum filetype: string {
      */
     private static function mime_type_matches_pattern(string $mimetype, string $pattern): bool {
         return str_ends_with($pattern, '%') && strncmp($pattern, $mimetype, strlen($pattern) - 1) === 0;
+    }
+
+    /**
+     * Derives the variant from an optional 'filetype' GET/POST parameter.
+     *
+     * @param filetype $default Default variant to return if the parameter is not provided.
+     * @return self Enum variant.
+     * @throws moodle_exception Provided 'filetype' parameter is invalid.
+     */
+    public static function optional_param(self $default = self::all): self {
+        $raw = optional_param('filetype', $default->value, PARAM_ALPHAEXT);
+        $filetype = self::tryFrom($raw);
+        if (is_null($filetype)) {
+            throw new moodle_exception('error:invalid_filetype', 'local_listcoursefiles');
+        }
+        return $filetype;
     }
 }
