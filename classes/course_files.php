@@ -291,12 +291,7 @@ class course_files {
         $sql = "UPDATE {files} SET license = ? WHERE id $sqlin";
         $DB->execute($sql, array_merge([$license], $params));
         foreach ($checkedfileids as $fid) {
-            $event = event\license_changed::create([
-                'context' => $this->context,
-                'objectid' => $fid,
-                'other' => ['license' => $license],
-            ]);
-            $event->trigger();
+            event\license_changed::instance($this->context, $fid, $license)->trigger();
         }
         $transaction->allow_commit();
     }
