@@ -24,8 +24,8 @@
 
 namespace local_listcoursefiles;
 
-use core\exception\coding_exception;
 use core\context\course as context_course;
+use core\exception\coding_exception;
 use core\exception\moodle_exception;
 use core_user\fields as user_fields;
 use course_modinfo;
@@ -259,18 +259,18 @@ class course_files {
     /**
      * Changes the license for the specified files.
      *
-     * @param string $license Short name of the license to set for the specified files.
-     * @param int $fileid ID of the file for which to modify the license.
-     * @param int ...$fileids More IDs of files for which to modify the license.
+     * @param string $shortname Short name of the license to set for the specified files
+     * @param int ...$fileids IDs of files for which to modify the license.
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function set_files_license(string $license, int $fileid, int ...$fileids): void {
+    public function set_license(string $shortname, int ...$fileids): void {
         global $DB;
-        $fileids = array_merge([$fileid], $fileids);
-        $licenses = licences::get_available_licenses();
-        if (!isset($licenses[$license])) {
+        if (!isset(licences::get_available_licenses()[$shortname])) {
             throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
+        }
+        if (empty($fileids)) {
+            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
         }
         if (count($fileids) > self::MAX_FILES) {
             throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
@@ -298,9 +298,9 @@ class course_files {
         [$sqlin, $params] = $DB->get_in_or_equal(array_keys($files), SQL_PARAMS_NAMED, 'fileid');
         $transaction = $DB->start_delegated_transaction();
         $sql = "UPDATE {files} SET license = :license WHERE id $sqlin";
-        $DB->execute($sql, $params + ['license' => $license]);
+        $DB->execute($sql, $params + ['license' => $shortname]);
         foreach ($files as $file) {
-            event\license_changed::instance($this->context, $file, $license)->trigger();
+            event\license_changed::instance($this->context, $file, $shortname)->trigger();
         }
         $transaction->allow_commit();
     }
@@ -310,14 +310,15 @@ class course_files {
      *
      * This function does not return if the zip archive could be created.
      *
-     * @param int $fileid ID of the file to download.
-     * @param int ...$fileids More IDs of files to download.
+     * @param int ...$fileids IDs of files to download.
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function download_files(int $fileid, int ...$fileids): void {
+    public function download(int ...$fileids): void {
         global $CFG, $DB;
-        $fileids = array_merge([$fileid], $fileids);
+        if (empty($fileids)) {
+            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
+        }
         if (count($fileids) > self::MAX_FILES) {
             throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
         }
