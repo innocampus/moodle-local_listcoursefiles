@@ -24,6 +24,7 @@
  * {@noinspection PhpUnhandledExceptionInspection}
  */
 
+use core\exception\moodle_exception;
 use core\notification;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\file_type;
@@ -78,7 +79,7 @@ if ($action === 'change_license') {
     $license = required_param('license', PARAM_NOTAGS);
     $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $coursefiles->set_files_license($license, ...$chosenfiles);
+        $coursefiles->set_license($license, ...$chosenfiles);
     } catch (moodle_exception $e) {
         notification::error($e->getMessage());
     }
@@ -87,7 +88,7 @@ if ($action === 'change_license') {
     require_sesskey();
     $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $coursefiles->download_files(...$chosenfiles);
+        $coursefiles->download(...$chosenfiles);
     } catch (moodle_exception $e) {
         notification::error($e->getMessage());
     }
