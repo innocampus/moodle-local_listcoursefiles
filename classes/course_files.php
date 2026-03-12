@@ -275,39 +275,34 @@ class course_files {
         if (count($fileids) > self::MAX_FILES) {
             throw new moodle_exception('too_many_files', 'local_listcoursefiles');
         }
-        // Check if the given files really belong to the context.
-        [$sqlin, $params] = $DB->get_in_or_equal($fileids);
-        $sql = "SELECT f.id, f.contextid, c.path
+        // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
+        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        $sql = "SELECT f.*, c.contextlevel, c.instanceid
                   FROM {files} f
                   JOIN {context} c ON (c.id = f.contextid)
-                 WHERE f.id $sqlin";
-        $files = $DB->get_records_sql($sql, $params);
-        $checkedfileids = array_keys(array_filter($files, [$this, 'file_belongs_to_context']));
-        if (count($checkedfileids) == 0) {
+                 WHERE f.filename NOT LIKE '.'
+                       AND (c.path LIKE :path OR c.id = :cid)
+                       AND f.id $sqlin";
+        $params += [
+            'path' => "{$this->context->path}/%",
+            'cid' => $this->context->id,
+        ];
+        $records = $DB->get_records_sql($sql, $params);
+        if (count($records) === 0) {
             return;
         }
-        [$sqlin, $params] = $DB->get_in_or_equal($checkedfileids);
+        $files = array_map(
+            fn (stdClass $record): course_file => course_file::from_record($record, $this->courseid),
+            $records,
+        );
+        [$sqlin, $params] = $DB->get_in_or_equal(array_keys($files), SQL_PARAMS_NAMED, 'fileid');
         $transaction = $DB->start_delegated_transaction();
-        $sql = "UPDATE {files} SET license = ? WHERE id $sqlin";
-        $DB->execute($sql, array_merge([$license], $params));
-        foreach ($checkedfileids as $fid) {
-            event\license_changed::instance($this->context, $fid, $license)->trigger();
+        $sql = "UPDATE {files} SET license = :license WHERE id $sqlin";
+        $DB->execute($sql, $params + ['license' => $license]);
+        foreach ($files as $file) {
+            event\license_changed::instance($this->context, $file, $license)->trigger();
         }
         $transaction->allow_commit();
-    }
-
-    /**
-     * Determines whether the given file belongs to the course context.
-     *
-     * This is the case if
-     * 1) the file's context ID is equal to the course context ID, or
-     * 2) the file's path starts with the course context path.
-     *
-     * @param stdClass $file File object to check; must have the `contextid` and `path` properties.
-     * @return bool `true`, if the file belongs to the course context, `false` otherwise.
-     */
-    private function file_belongs_to_context(stdClass $file): bool {
-        return $file->contextid == $this->context->id || str_starts_with($file->path, "{$this->context->path}/");
     }
 
     /**
@@ -326,19 +321,28 @@ class course_files {
         if (count($fileids) > self::MAX_FILES) {
             throw new moodle_exception('too_many_files', 'local_listcoursefiles');
         }
-        [$sqlin, $params] = $DB->get_in_or_equal($fileids);
-        $sql = "SELECT f.*, c.path, r.repositoryid, r.reference, r.lastsync AS referencelastsync
+        // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
+        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        $sql = "SELECT f.*, r.repositoryid, r.reference, r.lastsync AS referencelastsync
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
              LEFT JOIN {files_reference} r ON (f.referencefileid = r.id)
-                 WHERE f.id $sqlin";
+                 WHERE f.filename NOT LIKE '.'
+                       AND (c.path LIKE :path OR c.id = :cid)
+                       AND f.id $sqlin";
+        $params += [
+            'path' => "{$this->context->path}/%",
+            'cid' => $this->context->id,
+        ];
+        $records = $DB->get_records_sql($sql, $params);
+        if (count($records) === 0) {
+            return;
+        }
         $fs = get_file_storage();
         $files = [];
-        foreach ($DB->get_records_sql($sql, $params) as $filerecord) {
-            if ($this->file_belongs_to_context($filerecord)) {
-                $filename = self::download_get_unique_file_name($filerecord->filename, $files);
-                $files[$filename] = $fs->get_file_instance($filerecord);
-            }
+        foreach ($records as $record) {
+            $filename = self::download_get_unique_file_name($record->filename, $files);
+            $files[$filename] = $fs->get_file_instance($record);
         }
         $zipname = clean_filename("{$this->coursemodinfo->get_course()->fullname}.zip");
         $tmpfile = tempnam("$CFG->tempdir/", 'local_listcoursefiles');
