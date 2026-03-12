@@ -234,7 +234,7 @@ class course_file {
         return match ($used) {
             true    => new lang_string('yes'),
             false   => new lang_string('no'),
-            default => new lang_string('nottested', 'local_listcoursefiles'),
+            default => new lang_string('not_tested', 'local_listcoursefiles'),
         };
     }
 
