@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The local_listcoursefiles license changed event.
+ * Definition of the {@see \local_listcoursefiles\event\license_changed} class.
  *
  * @package   local_listcoursefiles
  * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
@@ -24,52 +24,64 @@
 namespace local_listcoursefiles\event;
 
 use coding_exception;
+use core\context\course as context_course;
 use core\event\base as event_base;
+use core\lang_string;
 
 /**
- * The local_listcoursefiles license changed event class.
+ * Event for when a user changes the license of a file.
+ *
+ * @property-read string $license Short name of the license set for the file.
  *
  * @package   local_listcoursefiles
  * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class license_changed extends event_base {
-
     /**
-     * Init method.
+     * Properly typed constructor.
+     *
+     * @param context_course $context Context of the course the file belongs to.
+     * @param int $fileid ID of the file.
+     * @param string $license Short name of the license set for the file.
+     * @return self New event instance.
+     * @throws coding_exception
      */
-    protected function init() {
+    public static function instance(context_course $context, int $fileid, string $license): self {
+        return self::create([
+            'context' => $context,
+            'objectid' => $fileid,
+            'other' => ['license' => $license],
+        ]);
+    }
+
+    #[\Override]
+    public function __get($name) {
+        if ($name === 'license') {
+            return $this->data['other']['license'];
+        }
+        return parent::__get($name);
+    }
+
+    #[\Override]
+    protected function init(): void {
         $this->data['objecttable'] = 'files';
         $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_TEACHING;
     }
 
-    /**
-     * Returns description of what happened.
-     *
-     * @return string
-     */
+    #[\Override]
     public function get_description(): string {
-        return "The user with id '$this->userid' changed the license of file with id '$this->objectid' ".
-        "to '" . $this->other['license'] . "'.";
+        return "The user with id '$this->userid' changed the license of file with id '$this->objectid' to '$this->license'.";
     }
 
-    /**
-     * Returns localised general event name.
-     *
-     * @return string
-     * @throws coding_exception
-     */
-    public static function get_name(): string {
-        return get_string('eventlicensechanged', 'local_listcoursefiles');
+    #[\Override]
+    public static function get_name(): lang_string {
+        return new lang_string('eventlicensechanged', 'local_listcoursefiles');
     }
 
-    /**
-     * Returns relevant URL.
-     *
-     * @return null
-     */
-    public function get_url() {
+    #[\Override]
+    public function get_url(): null {
         return null;
     }
 }
