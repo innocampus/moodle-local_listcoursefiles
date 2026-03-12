@@ -266,7 +266,7 @@ class course_files {
      */
     public function set_license(string $shortname, int ...$fileids): void {
         global $DB;
-        if (!isset(licences::get_available_licenses()[$shortname])) {
+        if (!isset(licenses::get_available_licenses()[$shortname])) {
             throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
         }
         if (empty($fileids)) {

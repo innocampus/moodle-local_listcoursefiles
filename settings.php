@@ -26,14 +26,14 @@
  * {@noinspection PhpUnhandledExceptionInspection}
  */
 
-use local_listcoursefiles\licences;
+use local_listcoursefiles\licenses;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $ADMIN, $hassiteconfig;
 
 if ($hassiteconfig) {
-    $licenses = licences::get_available_licenses();
+    $licenses = licenses::get_available_licenses();
     array_walk($licenses, fn (string &$value, string $key) => $value .= " ($key)");
     $settings = new admin_settingpage(
         name: 'local_listcoursefiles',

@@ -31,7 +31,7 @@ use dml_exception;
 use html_writer;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\filetype;
-use local_listcoursefiles\licences;
+use local_listcoursefiles\licenses;
 use moodle_url;
 use plugin_renderer_base;
 use stdClass;
@@ -67,7 +67,7 @@ class renderer extends plugin_renderer_base {
             'files_exist' => count($filelist) > 0,
             'change_license_allowed' => has_capability('local/listcoursefiles:change_license', $files->context),
             'download_allowed' => has_capability('local/listcoursefiles:download', $files->context),
-            'license_select_html' => html_writer::select(licences::get_available_licenses(), 'license'),
+            'license_select_html' => html_writer::select(licenses::get_available_licenses(), 'license'),
         ];
         return $this->render_from_template('local_listcoursefiles/view', $context);
     }

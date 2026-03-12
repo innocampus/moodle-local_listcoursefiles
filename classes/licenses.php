@@ -34,7 +34,7 @@ use license_manager;
  * @author    Jeremy FitzPatrick
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class licences {
+class licenses {
     /** @var string[]|null Cache of available licenses indexed by the license short name. */
     protected static array|null $licenses = null;
 
