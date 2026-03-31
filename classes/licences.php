@@ -50,6 +50,7 @@ class licences {
      *
      * @return string[]
      * @throws coding_exception
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public static function get_available_licenses(): array {
         if (is_null(self::$licenses)) {
