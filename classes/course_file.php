@@ -210,7 +210,7 @@ class course_file {
      */
     public function __get(string $name): string|false {
         return match ($name) {
-            'componentdisplay' => course_files::get_component_display_name($this->component),
+            'componentdisplay' => component::get_display_name($this->component),
             'componenturl'     => $this->get_component_url()?->out() ?? false,
             'displayname'      => $this->get_displayname(),
             'downloadurl'      => $this->get_download_url()?->out() ?? false,
