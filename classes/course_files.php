@@ -103,14 +103,14 @@ class course_files {
         $usernamefields = implode(', ', array_map(fn (string $field): string => "u.$field", user_fields::get_name_fields()));
         [$contextwhere, $params] = $this->course_context_filter();
         [$filterwhere, $filterparams] = $this->get_sql_filters();
+        $where = implode(' AND ', array_filter([$contextwhere, $filterwhere]));
+        $params += $filterparams;
         $sql = "SELECT f.*, c.contextlevel, c.instanceid, $usernamefields
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
              LEFT JOIN {user} u ON (u.id = f.userid)
-                 WHERE $contextwhere
-                       $filterwhere
+                 WHERE $where
               ORDER BY f.component, f.filename";
-        $params += $filterparams;
         $records = $DB->get_records_sql($sql, $params, $this->offset, $this->limit);
         $this->filelist = array_map(
             fn (stdClass $record): course_file => course_file::from_record($record, $this->courseid),
@@ -137,12 +137,12 @@ class course_files {
         }
         [$contextwhere, $params] = $this->course_context_filter();
         [$filterwhere, $filterparams] = $this->get_sql_filters();
+        $where = implode(' AND ', array_filter([$contextwhere, $filterwhere]));
+        $params += $filterparams;
         $sql = "SELECT COUNT(*)
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
-                 WHERE $contextwhere
-                       $filterwhere";
-        $params += $filterparams;
+                 WHERE $where";
         $this->filescount = $DB->count_records_sql($sql, $params);
         return $this->filescount;
     }
@@ -175,12 +175,12 @@ class course_files {
         [$sqlwhere, $params] = ['', []];
         [$filtersql, $filterparams] = $this->get_sql_component_filter();
         if ($filtersql !== '') {
-            $sqlwhere = "AND $filtersql";
+            $sqlwhere = $filtersql;
             $params += $filterparams;
         }
         [$filtersql, $filterparams] = $this->get_sql_mimetype_filter();
         if ($filtersql !== '') {
-            $sqlwhere = "AND ($filtersql)";
+            $sqlwhere = "($filtersql)";
             $params += $filterparams;
         }
         return [$sqlwhere, $params];
