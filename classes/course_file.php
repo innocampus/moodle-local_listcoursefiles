@@ -95,6 +95,10 @@ class course_file {
     /**
      * Private constructor propagating almost all arguments to public readonly properties.
      *
+     * Marked `private` so that instances (including those of subclasses) can only be built through the {@see from_record}
+     * factory. Subclass instantiation still works: the `new $class(...)` call inside {@see from_record} lives in
+     * `course_file` scope and therefore sees this private constructor on the subclass.
+     *
      * Most of the arguments/properties match the columns of the `files` table. In addition, this expects the following:
      * - {@see self::$contextlevel} from the joined `context` table.
      * - {@see self::$instanceid} from the joined `context` table.
