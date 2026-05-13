@@ -16,6 +16,8 @@
 
 namespace local_listcoursefiles\components;
 
+use dml_exception;
+
 /**
  * Represents a file uploaded in the context of an essay question.
  *
@@ -25,10 +27,16 @@ namespace local_listcoursefiles\components;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qtype_essay extends question {
+    /**
+     * {@inheritDoc}
+     *
+     * Looks at the `graderinfo` field of the associated `qtype_essay_options` record rather than the `question` record.
+     *
+     * @throws dml_exception
+     */
     #[\Override]
     protected function get_embedding_context(): string|false {
         global $DB;
-        $question = $DB->get_record('question', ['id' => $this->itemid]);
-        return $question?->{$this->filearea} ?? false;
+        return $DB->get_field('qtype_essay_options', 'graderinfo', ['questionid' => $this->itemid]) ?? false;
     }
 }
