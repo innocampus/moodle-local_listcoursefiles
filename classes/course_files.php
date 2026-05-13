@@ -243,7 +243,7 @@ class course_files {
         $fs = get_file_storage();
         $files = [];
         foreach ($records as $record) {
-            $filename = self::download_get_unique_file_name($record->filename, $files);
+            $filename = self::get_unique_download_name($record->filename, $files);
             $files[$filename] = $fs->get_file_instance($record);
         }
         $zipname = clean_filename("{$this->coursemodinfo->get_course()->fullname}.zip");
@@ -295,7 +295,7 @@ class course_files {
      * @param array $existingfiles Array with file name keys to exclude.
      * @return string Unique file name.
      */
-    private static function download_get_unique_file_name(string $filename, array $existingfiles): string {
+    private static function get_unique_download_name(string $filename, array $existingfiles): string {
         $name = clean_filename($filename);
         if (($lastdot = strrpos($name, '.')) === false) {
             $filename = $name;
