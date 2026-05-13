@@ -172,18 +172,19 @@ class course_files {
      * @throws dml_exception
      */
     private function get_sql_filters(): array {
-        [$sqlwhere, $params] = ['', []];
-        [$filtersql, $filterparams] = $this->get_sql_component_filter();
-        if ($filtersql !== '') {
-            $sqlwhere = $filtersql;
-            $params += $filterparams;
+        $parts = [];
+        $params = [];
+        [$sql, $componentparams] = $this->get_sql_component_filter();
+        if ($sql !== '') {
+            $parts[] = $sql;
+            $params += $componentparams;
         }
-        [$filtersql, $filterparams] = $this->get_sql_mimetype_filter();
-        if ($filtersql !== '') {
-            $sqlwhere = "($filtersql)";
-            $params += $filterparams;
+        [$sql, $mimetypeparams] = $this->get_sql_mimetype_filter();
+        if ($sql !== '') {
+            $parts[] = "($sql)";
+            $params += $mimetypeparams;
         }
-        return [$sqlwhere, $params];
+        return [implode(' AND ', $parts), $params];
     }
 
     /**
