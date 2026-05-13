@@ -283,8 +283,9 @@ class course_files {
     }
 
     /**
-     * Returns the SQL `WHERE` fragment and parameters restricting `{files} f` (joined against `{context} c`) to the
-     * course context and the given file IDs, excluding directory-entry rows.
+     * Returns the SQL `WHERE` fragment and parameters for the course context and given file IDs, excluding directory-entry rows.
+     *
+     * Relies on the tables `{files} f` joined against `{context} c`.
      *
      * Composes onto {@see course_context_filter} with an additional `f.id IN (...)` clause.
      *
