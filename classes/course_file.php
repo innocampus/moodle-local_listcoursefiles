@@ -19,6 +19,7 @@ namespace local_listcoursefiles;
 use core\exception\coding_exception;
 use core\exception\moodle_exception;
 use core\lang_string;
+use core_user\fields as user_fields;
 use dml_exception;
 use local_listcoursefiles\components\mod;
 use moodle_url;
@@ -67,20 +68,25 @@ class course_file {
         'usernamedisplay',
     ];
 
-    /** @var stdClass Information about the user who uploaded the file. */
-    private readonly stdClass $user;
-
     /**
      * Constructs a new instance of this class or an appropriate subclass from an untyped database record.
      *
-     * The record must have a property for every column in the `files` table, as well as a `contextlevel` and `instanceid`.
-     * All other properties are interpreted as fields of the joined `user` table.
+     * The record must have a property for every column in the `files` table, plus `contextlevel` and `instanceid` from the joined
+     * `context` table. Known username fields (per {@see user_fields::get_name_fields}) are peeled off into a dedicated user object;
+     * any other unrecognized columns will trigger an `Unknown named parameter` error at the constructor call.
      *
-     * @param stdClass $record
-     * @param int $courseid
-     * @return course_file
+     * @param stdClass $record DB record to construct the instance from.
+     * @param int $courseid ID of the associated course.
+     * @return static Instance of this class or an appropriate subclass.
      */
-    final public static function from_record(stdClass $record, int $courseid): course_file {
+    final public static function from_record(stdClass $record, int $courseid): static {
+        $user = new stdClass();
+        foreach (user_fields::get_name_fields() as $field) {
+            if (property_exists($record, $field)) {
+                $user->$field = $record->$field;
+                unset($record->$field);
+            }
+        }
         $classname = "\\local_listcoursefiles\\components\\$record->component";
         if (class_exists($classname)) {
             $class = $classname;
@@ -89,22 +95,19 @@ class course_file {
         } else {
             $class = self::class;
         }
-        return new $class(...(array) $record, courseid: $courseid);
+        return new $class(...(array) $record, courseid: $courseid, user: $user);
     }
 
     /**
      * Private constructor propagating almost all arguments to public readonly properties.
      *
-     * Marked `private` so that instances (including those of subclasses) can only be built through the {@see from_record}
-     * factory. Subclass instantiation still works: the `new $class(...)` call inside {@see from_record} lives in
-     * `course_file` scope and therefore sees this private constructor on the subclass.
+     * Marked `private` so that instances (including those of subclasses) are built through the {@see from_record} factory.
      *
      * Most of the arguments/properties match the columns of the `files` table. In addition, this expects the following:
      * - {@see self::$contextlevel} from the joined `context` table.
      * - {@see self::$instanceid} from the joined `context` table.
      * - {@see self::$courseid} representing the course the file was uploaded in.
-     *
-     * Any additional named arguments are interpreted as fields of the joined `user` table, representing the uploader of the file.
+     * - {@see self::$user} carrying the joined `user` name fields (assembled by {@see from_record}).
      *
      * @param int $id ID of the file.
      * @param string $contenthash Hash of the file content.
@@ -129,7 +132,7 @@ class course_file {
      * @param int $contextlevel Level of the associated context (from the joined `context` table).
      * @param int $instanceid ID of the associated instance (from the joined `context` table).
      * @param int $courseid ID of the course the file was uploaded in.
-     * @param mixed ...$user Fields of the joined `user` table.
+     * @param stdClass $user Joined `user` name fields (empty if none were selected).
      */
     final private function __construct(
         /** @var int ID of the file. */
@@ -178,9 +181,9 @@ class course_file {
         public readonly int $instanceid,
         /** @var int ID of the course the file was uploaded in. */
         public readonly int $courseid,
-        mixed ...$user,
+        /** @var stdClass Joined `user` name fields. */
+        private readonly stdClass $user = new stdClass(),
     ) {
-        $this->user = (object) $user;
     }
 
     /**
