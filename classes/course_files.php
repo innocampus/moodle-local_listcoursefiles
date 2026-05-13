@@ -101,19 +101,16 @@ class course_files {
             return $this->filelist;
         }
         $usernamefields = implode(', ', array_map(fn (string $field): string => "u.$field", user_fields::get_name_fields()));
-        [$sqlwhere, $params] = $this->get_sql_filters();
+        [$contextwhere, $params] = $this->course_context_filter();
+        [$filterwhere, $filterparams] = $this->get_sql_filters();
         $sql = "SELECT f.*, c.contextlevel, c.instanceid, $usernamefields
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
              LEFT JOIN {user} u ON (u.id = f.userid)
-                 WHERE f.filename NOT LIKE '.'
-                       AND (c.path LIKE :path OR c.id = :cid)
-                       $sqlwhere
+                 WHERE $contextwhere
+                       $filterwhere
               ORDER BY f.component, f.filename";
-        $params += [
-            'path' => "{$this->context->path}/%",
-            'cid' => $this->context->id,
-        ];
+        $params += $filterparams;
         $records = $DB->get_records_sql($sql, $params, $this->offset, $this->limit);
         $this->filelist = array_map(
             fn (stdClass $record): course_file => course_file::from_record($record, $this->courseid),
@@ -138,19 +135,33 @@ class course_files {
             $this->filescount = count($this->filelist) + $this->offset;
             return $this->filescount;
         }
-        [$sqlwhere, $params] = $this->get_sql_filters();
+        [$contextwhere, $params] = $this->course_context_filter();
+        [$filterwhere, $filterparams] = $this->get_sql_filters();
         $sql = "SELECT COUNT(*)
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
-                 WHERE f.filename NOT LIKE '.'
-                       AND (c.path LIKE :path OR c.id = :cid)
-                       $sqlwhere";
-        $params += [
-            'path' => "{$this->context->path}/%",
-            'cid' => $this->context->id,
-        ];
+                 WHERE $contextwhere
+                       $filterwhere";
+        $params += $filterparams;
         $this->filescount = $DB->count_records_sql($sql, $params);
         return $this->filescount;
+    }
+
+    /**
+     * Returns the SQL `WHERE` fragment and parameters restricting files to the course context and excluding directory-entry rows.
+     *
+     * Relies on the tables `{files} f` joined against `{context} c`.
+     *
+     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
+     */
+    private function course_context_filter(): array {
+        return [
+            "f.filename NOT LIKE '.' AND (c.path LIKE :path OR c.id = :cid)",
+            [
+                'path' => "{$this->context->path}/%",
+                'cid' => $this->context->id,
+            ],
+        ];
     }
 
     /**
@@ -237,13 +248,12 @@ class course_files {
         if ($this->components !== null) {
             return $this->components;
         }
+        [$where, $params] = $this->course_context_filter();
         $sql = "SELECT f.component
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
-                 WHERE f.filename NOT LIKE '.'
-                       AND (c.path LIKE :path OR c.id = :cid)
+                 WHERE $where
               GROUP BY f.component";
-        $params = ['path' => "{$this->context->path}/%", 'cid' => $this->context->id];
         $this->components = [];
         foreach ($DB->get_fieldset_sql($sql, $params) as $name) {
             $this->components[$name] = self::get_component_display_name($name);
@@ -272,26 +282,21 @@ class course_files {
     }
 
     /**
-     * Returns the SQL `WHERE` fragment and parameters for filtering files in the current context.
+     * Returns the SQL `WHERE` fragment and parameters restricting `{files} f` (joined against `{context} c`) to the
+     * course context and the given file IDs, excluding directory-entry rows.
      *
-     * Restricts `{files} f` (joined against `{context} c`) to the course context, the given IDs, and excludes directory-entry rows.
+     * Composes onto {@see course_context_filter} with an additional `f.id IN (...)` clause.
      *
      * @param int[] $fileids IDs the files must match.
      * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
      * @throws coding_exception
      * @throws dml_exception
      */
-    private function context_files_filter(array $fileids): array {
+    private function selected_files_filter(array $fileids): array {
         global $DB;
-        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
-        $params += [
-            'path' => "{$this->context->path}/%",
-            'cid' => $this->context->id,
-        ];
-        $where = "f.filename NOT LIKE '.'
-                  AND (c.path LIKE :path OR c.id = :cid)
-                  AND f.id $sqlin";
-        return [$where, $params];
+        [$where, $params] = $this->course_context_filter();
+        [$sqlin, $idparams] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        return ["$where AND f.id $sqlin", $params + $idparams];
     }
 
     /**
@@ -308,7 +313,7 @@ class course_files {
             throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
         }
         self::validate_file_ids($fileids);
-        [$where, $params] = $this->context_files_filter($fileids);
+        [$where, $params] = $this->selected_files_filter($fileids);
         $sql = "SELECT f.*, c.contextlevel, c.instanceid
                   FROM {files} f
                   JOIN {context} c ON (c.id = f.contextid)
@@ -344,7 +349,7 @@ class course_files {
     public function download(int ...$fileids): void {
         global $CFG, $DB;
         self::validate_file_ids($fileids);
-        [$where, $params] = $this->context_files_filter($fileids);
+        [$where, $params] = $this->selected_files_filter($fileids);
         $sql = "SELECT f.*, r.repositoryid, r.reference, r.lastsync AS referencelastsync
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
