@@ -101,16 +101,17 @@ class course_files {
             return $this->filelist;
         }
         $usernamefields = implode(', ', array_map(fn (string $field): string => "u.$field", user_fields::get_name_fields()));
-        [$contextwhere, $params] = $this->course_context_filter();
-        [$filterwhere, $filterparams] = $this->get_sql_filters();
+        [$ctxwhere, $ctxparams] = $this->sql_filter_course_context();
+        [$cmpwhere, $cmpparams] = $this->sql_filter_component();
+        [$mimwhere, $mimparams] = $this->sql_filter_mimetype();
+        $where = implode(' AND ', array_filter([$ctxwhere, $cmpwhere, $mimwhere]));
+        $params = $ctxparams + $cmpparams + $mimparams;
         $sql = "SELECT f.*, c.contextlevel, c.instanceid, $usernamefields
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
              LEFT JOIN {user} u ON (u.id = f.userid)
-                 WHERE $contextwhere
-                       $filterwhere
+                 WHERE $where
               ORDER BY f.component, f.filename";
-        $params += $filterparams;
         $records = $DB->get_records_sql($sql, $params, $this->offset, $this->limit);
         $this->filelist = array_map(
             fn (stdClass $record): course_file => course_file::from_record($record, $this->courseid),
@@ -135,105 +136,17 @@ class course_files {
             $this->filescount = count($this->filelist) + $this->offset;
             return $this->filescount;
         }
-        [$contextwhere, $params] = $this->course_context_filter();
-        [$filterwhere, $filterparams] = $this->get_sql_filters();
+        [$ctxwhere, $ctxparams] = $this->sql_filter_course_context();
+        [$cmpwhere, $cmpparams] = $this->sql_filter_component();
+        [$mimwhere, $mimparams] = $this->sql_filter_mimetype();
+        $where = implode(' AND ', array_filter([$ctxwhere, $cmpwhere, $mimwhere]));
+        $params = $ctxparams + $cmpparams + $mimparams;
         $sql = "SELECT COUNT(*)
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
-                 WHERE $contextwhere
-                       $filterwhere";
-        $params += $filterparams;
+                 WHERE $where";
         $this->filescount = $DB->count_records_sql($sql, $params);
         return $this->filescount;
-    }
-
-    /**
-     * Returns the SQL `WHERE` fragment and parameters restricting files to the course context and excluding directory-entry rows.
-     *
-     * Relies on the tables `{files} f` joined against `{context} c`.
-     *
-     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
-     */
-    private function course_context_filter(): array {
-        return [
-            "f.filename NOT LIKE '.' AND (c.path LIKE :path OR c.id = :cid)",
-            [
-                'path' => "{$this->context->path}/%",
-                'cid' => $this->context->id,
-            ],
-        ];
-    }
-
-    /**
-     * Returns the SQL fragment for the component and filetype filters.
-     *
-     * @return array{string, array<string, string>} SQL snippet and parameters.
-     * @throws coding_exception
-     * @throws dml_exception
-     */
-    private function get_sql_filters(): array {
-        [$sqlwhere, $params] = ['', []];
-        [$filtersql, $filterparams] = $this->get_sql_component_filter();
-        if ($filtersql !== '') {
-            $sqlwhere = "AND $filtersql";
-            $params += $filterparams;
-        }
-        [$filtersql, $filterparams] = $this->get_sql_mimetype_filter();
-        if ($filtersql !== '') {
-            $sqlwhere = "AND ($filtersql)";
-            $params += $filterparams;
-        }
-        return [$sqlwhere, $params];
-    }
-
-    /**
-     * Returns an SQL fragment for the component filter.
-     *
-     * @return array{string, array<string, string>} SQL snippet and parameters.
-     * @throws coding_exception
-     * @throws dml_exception
-     */
-    private function get_sql_component_filter(): array {
-        if ($this->component === 'all_without_submissions') {
-            return ["f.component NOT LIKE :component", ['component' => 'assign%']];
-        }
-        if ($this->component !== 'all' && isset($this->get_components()[$this->component])) {
-            return ["f.component LIKE :component", ['component' => $this->component]];
-        }
-        // TODO: Throw an exception, if the component is unknown?
-        return ['', []];
-    }
-
-    /**
-     * Returns an SQL fragment for the mimetype filter.
-     *
-     * @return array{string, array<string, string>} SQL snippet and parameters.
-     */
-    private function get_sql_mimetype_filter(): array {
-        if ($this->filetype === filetype::all) {
-            return ['', []];
-        }
-        if ($this->filetype === filetype::other) {
-            // Construct an SQL fragment that matches all MIME types that are _not_ in the list of known MIME types.
-            $mimetypes = filetype::all->get_mime_types();
-            [$oplike, $opequal] = ['NOT LIKE', '<>'];
-            $glue = ' AND ';
-        } else {
-            // Construct an SQL fragment that matches _any_ of the MIME types associated with the given file type.
-            // If the file type is not known, the expression will be empty and thus no filter will be applied.
-            $mimetypes = $this->filetype->get_mime_types();
-            [$oplike, $opequal] = ['LIKE', '='];
-            $glue = ' OR ';
-        }
-        $conditions = [];
-        $params = [];
-        foreach ($mimetypes as $i => $pattern) {
-            $op = str_ends_with($pattern, '%') ? $oplike : $opequal;
-            $conditions[] = "f.mimetype $op :mimetype$i";
-            $params["mimetype$i"] = $pattern;
-        }
-        $sql = implode($glue, $conditions);
-        return [$sql, $params];
     }
 
     /**
@@ -248,7 +161,7 @@ class course_files {
         if ($this->components !== null) {
             return $this->components;
         }
-        [$where, $params] = $this->course_context_filter();
+        [$where, $params] = $this->sql_filter_course_context();
         $sql = "SELECT f.component
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -267,39 +180,6 @@ class course_files {
     }
 
     /**
-     * Ensures the given file ID array is non-empty and does not exceed {@see self::MAX_FILES}.
-     *
-     * @param int[] $fileids Array of file IDs to validate.
-     * @throws moodle_exception
-     */
-    private static function validate_file_ids(array $fileids): void {
-        if (empty($fileids)) {
-            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
-        }
-        if (count($fileids) > self::MAX_FILES) {
-            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
-        }
-    }
-
-    /**
-     * Returns the SQL `WHERE` fragment and parameters restricting `{files} f` (joined against `{context} c`) to the
-     * course context and the given file IDs, excluding directory-entry rows.
-     *
-     * Composes onto {@see course_context_filter} with an additional `f.id IN (...)` clause.
-     *
-     * @param int[] $fileids IDs the files must match.
-     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
-     * @throws coding_exception
-     * @throws dml_exception
-     */
-    private function selected_files_filter(array $fileids): array {
-        global $DB;
-        [$where, $params] = $this->course_context_filter();
-        [$sqlin, $idparams] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
-        return ["$where AND f.id $sqlin", $params + $idparams];
-    }
-
-    /**
      * Changes the license for the specified files.
      *
      * @param string $shortname Short name of the license to set for the specified files
@@ -313,7 +193,7 @@ class course_files {
             throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
         }
         self::validate_file_ids($fileids);
-        [$where, $params] = $this->selected_files_filter($fileids);
+        [$where, $params] = $this->sql_filter_selected_files($fileids);
         $sql = "SELECT f.*, c.contextlevel, c.instanceid
                   FROM {files} f
                   JOIN {context} c ON (c.id = f.contextid)
@@ -349,7 +229,7 @@ class course_files {
     public function download(int ...$fileids): void {
         global $CFG, $DB;
         self::validate_file_ids($fileids);
-        [$where, $params] = $this->selected_files_filter($fileids);
+        [$where, $params] = $this->sql_filter_selected_files($fileids);
         $sql = "SELECT f.*, r.repositoryid, r.reference, r.lastsync AS referencelastsync
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
@@ -372,6 +252,37 @@ class course_files {
         // TODO: Throw an exception if the zip archive could not be created?
         if ($zip->archive_to_pathname($files, $tmpfile)) {
             send_temp_file($tmpfile, $zipname);
+        }
+    }
+
+    /**
+     * Returns the human-readable name (translated) of the given component if possible.
+     *
+     * @param string $name Name of the component.
+     * @return string Component display name.
+     * @throws coding_exception
+     */
+    public static function get_component_display_name(string $name): string {
+        if (get_string_manager()->string_exists('pluginname', $name)) {
+            return get_string('pluginname', $name);
+        } else if (get_string_manager()->string_exists($name, '')) {
+            return get_string($name);
+        }
+        return $name;
+    }
+
+    /**
+     * Ensures the given file ID array is non-empty and does not exceed {@see self::MAX_FILES}.
+     *
+     * @param int[] $fileids Array of file IDs to validate.
+     * @throws moodle_exception
+     */
+    private static function validate_file_ids(array $fileids): void {
+        if (empty($fileids)) {
+            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
+        }
+        if (count($fileids) > self::MAX_FILES) {
+            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
         }
     }
 
@@ -402,18 +313,96 @@ class course_files {
     }
 
     /**
-     * Returns the human-readable name (translated) of the given component if possible.
+     * Returns the SQL `WHERE` fragment and parameters restricting files to the course context and excluding directory-entry rows.
      *
-     * @param string $name Name of the component.
-     * @return string Component display name.
-     * @throws coding_exception
+     * Relies on the tables `{files} f` joined against `{context} c`.
+     *
+     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
      */
-    public static function get_component_display_name(string $name): string {
-        if (get_string_manager()->string_exists('pluginname', $name)) {
-            return get_string('pluginname', $name);
-        } else if (get_string_manager()->string_exists($name, '')) {
-            return get_string($name);
+    private function sql_filter_course_context(): array {
+        return [
+            "f.filename NOT LIKE '.' AND (c.path LIKE :path OR c.id = :cid)",
+            [
+                'path' => "{$this->context->path}/%",
+                'cid' => $this->context->id,
+            ],
+        ];
+    }
+
+    /**
+     * Returns the SQL `WHERE` fragment and parameters for the component filter.
+     *
+     * Returns an empty fragment when the filter is `all`.
+     *
+     * Relies on the table `{files} f`.
+     *
+     * @return array{string, array<string, string>} `WHERE` fragment and named parameters.
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    private function sql_filter_component(): array {
+        if ($this->component === 'all_without_submissions') {
+            return ["f.component NOT LIKE :component", ['component' => 'assign%']];
         }
-        return $name;
+        if ($this->component !== 'all' && isset($this->get_components()[$this->component])) {
+            return ["f.component LIKE :component", ['component' => $this->component]];
+        }
+        // TODO: Throw an exception, if the component is unknown?
+        return ['', []];
+    }
+
+    /**
+     * Returns the SQL `WHERE` fragment and parameters for the MIME type filter.
+     *
+     * Returns an empty fragment when the filter is {@see filetype::all}. The non-empty fragment is wrapped in parentheses
+     * because it contains internal `OR`/`AND` connectives and must compose safely with outer `AND`s.
+     *
+     * Relies on the table `{files} f`.
+     *
+     * @return array{string, array<string, string>} `WHERE` fragment and named parameters.
+     */
+    private function sql_filter_mimetype(): array {
+        if ($this->filetype === filetype::all) {
+            return ['', []];
+        }
+        if ($this->filetype === filetype::other) {
+            // Construct an SQL fragment that matches all MIME types that are _not_ in the list of known MIME types.
+            $mimetypes = filetype::all->get_mime_types();
+            [$oplike, $opequal] = ['NOT LIKE', '<>'];
+            $glue = ' AND ';
+        } else {
+            // Construct an SQL fragment that matches _any_ of the MIME types associated with the given file type.
+            // If the file type is not known, the expression will be empty and thus no filter will be applied.
+            $mimetypes = $this->filetype->get_mime_types();
+            [$oplike, $opequal] = ['LIKE', '='];
+            $glue = ' OR ';
+        }
+        $conditions = [];
+        $params = [];
+        foreach ($mimetypes as $i => $pattern) {
+            $op = str_ends_with($pattern, '%') ? $oplike : $opequal;
+            $conditions[] = "f.mimetype $op :mimetype$i";
+            $params["mimetype$i"] = $pattern;
+        }
+        return ['(' . implode($glue, $conditions) . ')', $params];
+    }
+
+    /**
+     * Returns the SQL `WHERE` fragment and parameters for the course context and given file IDs, excluding directory-entry rows.
+     *
+     * Relies on the tables `{files} f` joined against `{context} c`.
+     *
+     * Composes onto {@see sql_filter_course_context} with an additional `f.id IN (...)` clause.
+     *
+     * @param int[] $fileids IDs the files must match.
+     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    private function sql_filter_selected_files(array $fileids): array {
+        global $DB;
+        [$where, $params] = $this->sql_filter_course_context();
+        [$sqlin, $idparams] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        return ["$where AND f.id $sqlin", $params + $idparams];
     }
 }
