@@ -26,6 +26,7 @@
 
 use core\exception\moodle_exception;
 use core\notification;
+use local_listcoursefiles\component;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\filetype;
 
@@ -42,7 +43,7 @@ if ($page < 0) {
 if ($limit < 1 || $limit > course_files::MAX_FILES) {
     $limit = course_files::MAX_FILES;
 }
-$component = optional_param('component', 'all_without_submissions', PARAM_ALPHANUMEXT);
+$component = component::optional_param();
 $filetype = filetype::optional_param(); // TODO: Catch invalid filetype exception and display error notification?
 $action = optional_param('action', '', PARAM_ALPHAEXT);
 

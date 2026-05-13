@@ -29,6 +29,7 @@ use core\exception\coding_exception;
 use core\exception\moodle_exception;
 use dml_exception;
 use html_writer;
+use local_listcoursefiles\component;
 use local_listcoursefiles\course_files;
 use local_listcoursefiles\filetype;
 use local_listcoursefiles\licenses;
@@ -113,17 +114,22 @@ class renderer extends plugin_renderer_base {
      * Builds an HTML snippet for the component selection drop-down menu.
      *
      * @param moodle_url $url Form action URL.
-     * @param array $allcomponents All available components.
+     * @param array $availablecomponents All available components.
      * @param string $currentcomponent Currently selected component.
      * @return string HTML snippet.
+     * @throws coding_exception
      */
-    private function get_component_selection(moodle_url $url, array $allcomponents, string $currentcomponent): string {
+    private function get_component_selection(moodle_url $url, array $availablecomponents, string $currentcomponent): string {
         $url = clone $url;
         $url->remove_params('page');
+        $options = [];
+        foreach (array_merge([component::ALL, component::ALL_WITHOUT_SUBMISSIONS], $availablecomponents) as $component) {
+            $options[$component] = component::get_display_name($component);
+        }
         return $this->output->single_select(
             url: $url,
             name: 'component',
-            options: $allcomponents,
+            options: $options,
             selected: $currentcomponent,
             nothing: '',
             formid: 'componentselector',

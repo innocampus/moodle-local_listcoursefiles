@@ -50,10 +50,7 @@ class course_files {
     /** @var course_modinfo Module info of the course for which the files are managed. */
     public readonly course_modinfo $coursemodinfo;
 
-    /**
-     * @var string[]|null Cached translated names of all components with files in the course, indexed by component name;
-     *                    `null` if not yet fetched.
-     */
+    /** @var string[]|null Cached sorted array of names of all components with files in the course; `null` if not yet fetched. */
     private array|null $components = null;
 
     /** @var course_file[]|null Cached array of files; `null` if not yet fetched. */
@@ -152,8 +149,7 @@ class course_files {
     /**
      * Returns all available components that have files in the course.
      *
-     * @return string[] Array of translated names of all components with files in the course, indexed by component name.
-     * @throws coding_exception
+     * @return string[] Sorted array of names of all components with files in the course.
      * @throws dml_exception
      */
     public function get_components(): array {
@@ -167,15 +163,8 @@ class course_files {
              LEFT JOIN {context} c ON (c.id = f.contextid)
                  WHERE $where
               GROUP BY f.component";
-        $this->components = [];
-        foreach ($DB->get_fieldset_sql($sql, $params) as $name) {
-            $this->components[$name] = self::get_component_display_name($name);
-        }
+        $this->components = $DB->get_fieldset_sql($sql, $params);
         asort($this->components, SORT_STRING | SORT_FLAG_CASE);
-        $this->components = [
-            'all' => get_string('all_files', 'local_listcoursefiles'),
-            'all_without_submissions' => get_string('all_without_submissions', 'local_listcoursefiles'),
-        ] + $this->components;
         return $this->components;
     }
 
@@ -256,22 +245,6 @@ class course_files {
     }
 
     /**
-     * Returns the human-readable name (translated) of the given component if possible.
-     *
-     * @param string $name Name of the component.
-     * @return string Component display name.
-     * @throws coding_exception
-     */
-    public static function get_component_display_name(string $name): string {
-        if (get_string_manager()->string_exists('pluginname', $name)) {
-            return get_string('pluginname', $name);
-        } else if (get_string_manager()->string_exists($name, '')) {
-            return get_string($name);
-        }
-        return $name;
-    }
-
-    /**
      * Ensures the given file ID array is non-empty and does not exceed {@see self::MAX_FILES}.
      *
      * @param int[] $fileids Array of file IDs to validate.
@@ -337,14 +310,16 @@ class course_files {
      * Relies on the table `{files} f`.
      *
      * @return array{string, array<string, string>} `WHERE` fragment and named parameters.
-     * @throws coding_exception
      * @throws dml_exception
      */
     private function sql_filter_component(): array {
-        if ($this->component === 'all_without_submissions') {
+        if ($this->component === component::ALL_WITHOUT_SUBMISSIONS) {
             return ["f.component NOT LIKE :component", ['component' => 'assign%']];
         }
-        if ($this->component !== 'all' && isset($this->get_components()[$this->component])) {
+        if ($this->component === component::ALL) {
+            return ['', []];
+        }
+        if (in_array($this->component, $this->get_components())) {
             return ["f.component LIKE :component", ['component' => $this->component]];
         }
         // TODO: Throw an exception, if the component is unknown?
