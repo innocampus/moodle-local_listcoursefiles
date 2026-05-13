@@ -257,6 +257,44 @@ class course_files {
     }
 
     /**
+     * Ensures the given file ID array is non-empty and does not exceed {@see self::MAX_FILES}.
+     *
+     * @param int[] $fileids Array of file IDs to validate.
+     * @throws moodle_exception
+     */
+    private static function validate_file_ids(array $fileids): void {
+        if (empty($fileids)) {
+            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
+        }
+        if (count($fileids) > self::MAX_FILES) {
+            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
+        }
+    }
+
+    /**
+     * Returns the SQL `WHERE` fragment and parameters for filtering files in the current context.
+     *
+     * Restricts `{files} f` (joined against `{context} c`) to the course context, the given IDs, and excludes directory-entry rows.
+     *
+     * @param int[] $fileids IDs the files must match.
+     * @return array{string, array<string, mixed>} `WHERE` fragment and named parameters.
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    private function context_files_filter(array $fileids): array {
+        global $DB;
+        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        $params += [
+            'path' => "{$this->context->path}/%",
+            'cid' => $this->context->id,
+        ];
+        $where = "f.filename NOT LIKE '.'
+                  AND (c.path LIKE :path OR c.id = :cid)
+                  AND f.id $sqlin";
+        return [$where, $params];
+    }
+
+    /**
      * Changes the license for the specified files.
      *
      * @param string $shortname Short name of the license to set for the specified files
@@ -269,25 +307,14 @@ class course_files {
         if (!isset(licenses::get_available_licenses()[$shortname])) {
             throw new moodle_exception('error:invalid_license', 'local_listcoursefiles');
         }
-        if (empty($fileids)) {
-            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
-        }
-        if (count($fileids) > self::MAX_FILES) {
-            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
-        }
-        // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
-        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        self::validate_file_ids($fileids);
+        [$where, $params] = $this->context_files_filter($fileids);
         $sql = "SELECT f.*, c.contextlevel, c.instanceid
                   FROM {files} f
                   JOIN {context} c ON (c.id = f.contextid)
-                 WHERE f.filename NOT LIKE '.'
-                       AND (c.path LIKE :path OR c.id = :cid)
-                       AND f.id $sqlin";
-        $params += [
-            'path' => "{$this->context->path}/%",
-            'cid' => $this->context->id,
-        ];
+                 WHERE $where";
         $records = $DB->get_records_sql($sql, $params);
+        // Silently return if validated IDs map to no rows here: legitimate "nothing to do" and out-of-context IDs both land here.
         if (count($records) === 0) {
             return;
         }
@@ -316,26 +343,15 @@ class course_files {
      */
     public function download(int ...$fileids): void {
         global $CFG, $DB;
-        if (empty($fileids)) {
-            throw new moodle_exception('error:no_files_selected', 'local_listcoursefiles');
-        }
-        if (count($fileids) > self::MAX_FILES) {
-            throw new moodle_exception('error:too_many_files', 'local_listcoursefiles');
-        }
-        // Only fetch records for those files that really belong to the context. Exclude the top file area folders ('.' file names).
-        [$sqlin, $params] = $DB->get_in_or_equal($fileids, SQL_PARAMS_NAMED, 'fileid');
+        self::validate_file_ids($fileids);
+        [$where, $params] = $this->context_files_filter($fileids);
         $sql = "SELECT f.*, r.repositoryid, r.reference, r.lastsync AS referencelastsync
                   FROM {files} f
              LEFT JOIN {context} c ON (c.id = f.contextid)
              LEFT JOIN {files_reference} r ON (f.referencefileid = r.id)
-                 WHERE f.filename NOT LIKE '.'
-                       AND (c.path LIKE :path OR c.id = :cid)
-                       AND f.id $sqlin";
-        $params += [
-            'path' => "{$this->context->path}/%",
-            'cid' => $this->context->id,
-        ];
+                 WHERE $where";
         $records = $DB->get_records_sql($sql, $params);
+        // Silently return if validated IDs map to no rows here: legitimate "nothing to do" and out-of-context IDs both land here.
         if (count($records) === 0) {
             return;
         }
