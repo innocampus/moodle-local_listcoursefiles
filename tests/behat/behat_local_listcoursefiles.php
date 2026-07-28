@@ -75,7 +75,10 @@ class behat_local_listcoursefiles extends behat_base {
             throw new ExpectationException('No file checkboxes are selected to download.', $this->getSession());
         }
         // Replay the form POST over the browser's session.
-        $postdata = http_build_query(['sesskey' => $sesskey->getValue(), 'action' => 'download', 'file' => $files]);
+        $postdata = http_build_query(
+            data: ['sesskey' => $sesskey->getValue(), 'action' => 'download', 'file' => $files],
+            arg_separator: '&', // Necessary for Moodle <5.2 because there it is 'amp;' by default.
+        );
         $cookie = $this->getSession()->getCookie('MoodleSession');
         $content = download_file_content($form->getAttribute('action'), ['Cookie' => "MoodleSession=$cookie"], $postdata);
         $zippath = make_request_directory() . '/downloaded.zip';
