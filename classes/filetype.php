@@ -131,7 +131,7 @@ enum filetype: string {
     /**
      * Derives the variant from an optional 'filetype' GET/POST parameter.
      *
-     * @param filetype $default Default variant to return if the parameter is not provided.
+     * @param self $default Default variant to return if the parameter is not provided.
      * @return self Enum variant.
      * @throws moodle_exception Provided 'filetype' parameter is invalid.
      */
