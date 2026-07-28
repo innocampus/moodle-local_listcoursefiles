@@ -26,8 +26,8 @@ use core\context;
 use core\context\course as context_course;
 use core\context\module as context_module;
 use core\exception\moodle_exception;
-use core\navigation\settings_navigation;
 use core\output\pix_icon;
+// TODO: Add `use core\navigation\settings_navigation;` once Moodle 5.0 support is dropped.
 
 /**
  * Adds the course files overview page link to the course administration.
