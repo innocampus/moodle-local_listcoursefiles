@@ -16,57 +16,46 @@
 
 namespace local_listcoursefiles\components;
 
+use dml_exception;
+use file_storage;
 use local_listcoursefiles\course_file;
+use moodle_url;
+use stored_file;
 
 /**
- * Class contentbank
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ * Represents a file in the content bank.
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class contentbank extends course_file {
     /**
-     * Show the name of the file as it appears in content bank
+     * {@inheritDoc}
      *
-     * @return string
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    protected function get_displayed_filename(): string {
+    #[\Override]
+    protected function get_displayname(): string {
         global $DB;
-        $cb = $DB->get_record('contentbank_content', ['id' => $this->file->itemid]);
-        return $cb->name;
+        return $DB->get_field('contentbank_content', 'name', ['id' => $this->itemid]) ?: parent::get_displayname();
     }
 
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
-     */
-    protected function get_file_download_url(): ?\moodle_url {
-        return $this->get_standard_file_download_url();
+    #[\Override]
+    protected function get_download_url(): moodle_url {
+        return $this->get_standard_download_url();
     }
 
-    /**
-     * Try to get the url for the component (module or course).
-     *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
-     */
-    protected function get_component_url(): ?\moodle_url {
-        return new \moodle_url('/contentbank/index.php', ['contextid' => $this->file->contextid]);
+    #[\Override]
+    protected function get_component_url(): moodle_url {
+        return new moodle_url('/contentbank/index.php', ['contextid' => $this->contextid]);
     }
 
-    /**
-     * Not checking content bank
-     *
-     * @return null
-     * @throws \moodle_exception
-     */
-    protected function is_file_used(): ?bool {
-        $fs = new \file_storage();
-        $f = new \stored_file($fs, $this->file);
+    #[\Override]
+    protected function is_used(): bool {
+        $fs = new file_storage();
+        $f = new stored_file($fs, (object) (array) $this);
         return $fs->get_references_count_by_storedfile($f) > 1;
     }
 }

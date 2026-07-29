@@ -15,32 +15,39 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Administration settings definitions for local listcoursefiles.
+ * Plugin settings.
  *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @link https://moodledev.io/docs/apis/subsystems/admin Admin settings Moodle docs
+ *
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * {@noinspection PhpUnhandledExceptionInspection}
  */
+
+use local_listcoursefiles\licenses;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/local/listcoursefiles/lib.php');
+global $ADMIN, $hassiteconfig;
 
 if ($hassiteconfig) {
-    $licenses = local_listcoursefiles\licences::get_available_licenses();
-    $licensenames = '';
-    foreach ($licenses as $short => $full) {
-        $licensenames .= "$full ($short), ";
-    }
-    $licensenames = substr($licensenames, 0, -2);
-
-    $settings = new admin_settingpage('local_listcoursefiles',
-            get_string('pluginname', 'local_listcoursefiles'), 'moodle/site:config');
-    $settings->add(new admin_setting_configtextarea('local_listcoursefiles/licensecolors',
-            get_string('license_colors', 'local_listcoursefiles'),
-            get_string('license_colors_desc', 'local_listcoursefiles', $licensenames),
-            ''));
-
+    $licenses = licenses::get_available_licenses();
+    array_walk($licenses, fn (string &$value, string $key) => $value .= " ($key)");
+    $settings = new admin_settingpage(
+        name: 'local_listcoursefiles',
+        visiblename: new lang_string('pluginname', 'local_listcoursefiles'),
+        req_capability: 'moodle/site:config',
+    );
+    $settings->add(
+        new admin_setting_configtextarea(
+            name: 'local_listcoursefiles/licensecolors',
+            visiblename: new lang_string('license_colors', 'local_listcoursefiles'),
+            description: new lang_string('license_colors_desc', 'local_listcoursefiles', implode(', ', $licenses)),
+            defaultsetting: '',
+        )
+    );
+    /** @var admin_root $ADMIN */
     $ADMIN->add('localplugins', $settings);
 }
-

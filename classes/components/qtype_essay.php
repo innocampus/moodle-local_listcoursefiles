@@ -16,31 +16,27 @@
 
 namespace local_listcoursefiles\components;
 
-use moodle_url;
+use dml_exception;
 
 /**
- * Represents a file uploaded in a folder module context.
+ * Represents a file uploaded in the context of an essay question.
  *
  * @package   local_listcoursefiles
  * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_folder extends mod {
+class qtype_essay extends question {
+    /**
+     * {@inheritDoc}
+     *
+     * Looks at the `graderinfo` field of the associated `qtype_essay_options` record rather than the `question` record.
+     *
+     * @throws dml_exception
+     */
     #[\Override]
-    protected function get_download_url(): moodle_url|null {
-        if ($this->filearea === 'content') {
-            return $this->get_standard_download_url();
-        }
-        return parent::get_download_url();
-    }
-
-    #[\Override]
-    protected function is_used(): bool|null {
-        if ($this->filearea === 'content') {
-            return true;
-        }
-        // Parent implementation will check for embedding in the `intro` file area.
-        return parent::is_used();
+    protected function get_embedding_context(): string|false {
+        global $DB;
+        return $DB->get_field('qtype_essay_options', 'graderinfo', ['questionid' => $this->itemid]) ?? false;
     }
 }

@@ -1,0 +1,1 @@
+List course files behat fixture: an assignment file submission (component assignsubmission_file).

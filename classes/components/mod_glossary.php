@@ -16,49 +16,41 @@
 
 namespace local_listcoursefiles\components;
 
-use local_listcoursefiles\course_file;
+use moodle_url;
 
 /**
- * Class mod_glossary
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ * Represents a file uploaded in a glossary module context.
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_glossary extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
-     */
-    protected function get_file_download_url(): ?\moodle_url {
-        switch ($this->file->filearea) {
-            case 'entry':
-            case 'attachment':
-                return $this->get_standard_file_download_url();
-            default:
-                return parent::get_file_download_url();
-        }
+class mod_glossary extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'attachment', 'entry' => $this->get_standard_download_url(),
+            default               => parent::get_download_url(),
+        };
     }
 
-    /**
-     * Checks if embedded files have been used
-     *
-     * @return bool|null
-     * @throws \dml_exception
-     */
-    protected function is_file_used(): ?bool {
-        // File areas = intro, chapter.
-        global $DB;
-        switch ($this->file->filearea) {
-            case 'attachment':
-                return true;
-            case 'entry':
-                $entry = $DB->get_record('glossary_entries', ['id' => $this->file->itemid]);
-                return $this->is_embedded_file_used($entry, 'definition', $this->file->filename);
-            default:
-                return parent::is_file_used();
+    #[\Override]
+    protected function is_used(): bool|null {
+        if ($this->filearea === 'attachment') {
+            return true;
         }
+        // Parent implementation will check for embedding in the `entry` or `intro` file area.
+        return parent::is_used();
+    }
+
+    #[\Override]
+    protected function get_embedding_context(): string|false {
+        global $DB;
+        if ($this->filearea === 'entry') {
+            return $DB->get_field('glossary_entries', 'definition', ['id' => $this->itemid]);
+        }
+        // Parent implementation covers the `intro` file area.
+        return parent::get_embedding_context();
     }
 }

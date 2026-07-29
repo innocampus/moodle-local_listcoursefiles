@@ -16,47 +16,52 @@
 
 namespace local_listcoursefiles\components;
 
-use local_listcoursefiles\course_file;
+use dml_exception;
+use moodle_url;
 
 /**
- * Class mod_data
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ * Represents a file uploaded in a data module context.
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_data extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
-     */
-    protected function get_file_download_url(): ?\moodle_url {
-        if ($this->file->filearea == 'content') {
-            return $this->get_standard_file_download_url();
+class mod_data extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        if ($this->filearea == 'content') {
+            return $this->get_standard_download_url();
         }
-        return parent::get_file_download_url();
+        return parent::get_download_url();
     }
 
     /**
-     * Checks if embedded files have been used
+     * {@inheritDoc}
      *
-     * @return bool|null
-     * @throws \dml_exception
+     * @throws dml_exception
      */
-    protected function is_file_used(): ?bool {
-        // File areas = intro, content.
+    #[\Override]
+    protected function is_used(): bool|null {
         global $DB;
-        if ($this->file->filearea === 'content') {
-            $sql = "SELECT *
+        if ($this->filearea === 'content') {
+            $sql = "SELECT df.type, dc.content
                       FROM {data_content} dc
                       JOIN {data_fields} df ON df.id = dc.fieldid
-                     WHERE dc.id = ?";
-            $data = $DB->get_record_sql($sql, [$this->file->itemid]);
-            $path = '@@PLUGINFILE@@/' . rawurlencode($this->file->filename);
-            return $data->type !== 'textarea' || false !== strpos($data->content, $path);
+                     WHERE dc.id = :contentid";
+            $data = $DB->get_record_sql($sql, ['contentid' => $this->itemid]);
+            if (!$data) {
+                return null;
+            }
+            if ($data->type !== 'textarea') {
+                return true;
+            }
+            if (is_null($data->content)) {
+                return null;
+            }
+            return parent::is_embedded_in($data->content);
         }
-        return parent::is_file_used();
+        // Parent implementation will check for embedding in the `intro` file area.
+        return parent::is_used();
     }
 }

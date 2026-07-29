@@ -1,0 +1,1 @@
+List course files behat fixture: a plain-text document (text/plain -> Document filetype).

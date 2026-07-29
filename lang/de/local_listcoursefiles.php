@@ -15,50 +15,48 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Lang strings.
+ * German language strings to be used by local/listcoursefiles
  *
- * Language strings to be used by local/listcoursefiles
- *
- * @package    local_listcoursefiles
- * @copyright  2016 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2016 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 $string['all_files'] = 'Alle Dateien';
-$string['all_wo_submissions'] = 'Alle außer Abgaben';
+$string['all_without_submissions'] = 'Alle außer Abgaben';
 $string['change_license'] = 'Ändere Lizenz auf';
 $string['check_uncheck_all'] = 'Alle/keine auswählen';
 $string['component'] = 'Komponente';
 $string['description'] = 'Diese Seite listet alle Dateien im Kurs auf. Hinweis: Nicht alle Dateien können von hier heruntergeladen werden.';
-$string['eventlicensechanged'] = 'Lizenz geändert';
+$string['error:invalid_filetype'] = 'Ungültiger Dateityp gegeben.';
+$string['error:invalid_license'] = 'Ungültige Lizenz gegeben.';
+$string['error:no_files_selected'] = 'Es wurde keine Datei ausgewählt.';
+$string['error:too_many_files'] = 'Zu viele Dateien gegeben';
+$string['event:license_changed'] = 'Lizenz geändert';
 $string['filename'] = 'Dateiname';
 $string['filesize'] = 'Größe';
-$string['filetype_all'] = 'Alle Dateitypen';
-$string['filetype_archive'] = 'Archiv';
-$string['filetype_audio'] = 'Audio';
-$string['filetype_document'] = 'Textdokument';
-$string['filetype_hvp'] = 'H5P Archiv';
-$string['filetype_image'] = 'Bild';
-$string['filetype_other'] = 'Andere';
-$string['filetype_video'] = 'Video';
+$string['filetype:all'] = 'Alle Dateitypen';
+$string['filetype:archive'] = 'Archiv';
+$string['filetype:audio'] = 'Audio';
+$string['filetype:document'] = 'Textdokument';
+$string['filetype:hvp'] = 'H5P Archiv';
+$string['filetype:image'] = 'Bild';
+$string['filetype:other'] = 'Andere';
+$string['filetype:video'] = 'Video';
 $string['filter_components'] = 'Nach Komponente filtern';
 $string['filter_filetype'] = 'Nach Dateityp filtern';
-$string['invalid_license'] = 'Ungültige Lizenz gegeben.';
 $string['license'] = 'Lizenz';
 $string['license_colors'] = 'Farben zu den Lizenzen';
 $string['license_colors_desc'] = 'Hiermit kann den Lizenzen eine Schriftfarbe zugeordnet werden. Pro Zeile der Kurzname der Lizenz, gefolgt von einem Leerzeichen und dem RGB-Farbcode ohne # (z.B. allrightsreserved ff0000). Es gibt die folgenden Lizenzen (Kurzname in Klammern): {$a}';
-$string['linkname'] = 'Kursdateien';
 $string['listcoursefiles:change_license'] = 'Lizenzen von Dateien ändern';
 $string['listcoursefiles:download'] = 'Dateien im Kurs herunterladen';
 $string['listcoursefiles:view'] = 'Alle Dateien in einem Kurs einsehen';
 $string['mimetype'] = 'Dateityp';
-$string['no_file_selected'] = 'Es wurde keine Datei ausgewählt.';
-$string['nothingfound'] = 'Keine Dateien gefunden.';
-$string['nottested'] = 'Nicht überprüft';
+$string['nav_link_course_files'] = 'Kursdateien';
+$string['no_files_found'] = 'Keine Dateien gefunden.';
+$string['not_tested'] = 'Nicht überprüft';
 $string['pluginname'] = 'Auflistung der Kursdateien';
 $string['privacy:metadata'] = 'Das Plugin Auflistung der Kursdateien zeigt nur bereits existierende Dateien an.';
-$string['too_many_files'] = 'Zu viele Dateien gegeben';
 $string['uploader'] = 'Hochgeladen von';
 $string['used'] = 'Verwendet';
 $string['zip_download'] = 'Ausgewählte Dateien herunterladen';

@@ -17,12 +17,22 @@
 /**
  * List all files in a course.
  *
- * @package    local_listcoursefiles
- * @copyright  2017 Martin Gauk (@innoCampus, TU Berlin)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_listcoursefiles
+ * @copyright 2017 Martin Gauk (@innoCampus, TU Berlin)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * {@noinspection PhpUnhandledExceptionInspection}
  */
 
+use core\exception\moodle_exception;
+use core\notification;
+use local_listcoursefiles\component;
+use local_listcoursefiles\course_files;
+use local_listcoursefiles\filetype;
+
 require_once(dirname(__FILE__) . '/../../config.php');
+
+global $OUTPUT, $PAGE;
 
 $courseid = required_param('courseid', PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
@@ -30,15 +40,20 @@ $limit = optional_param('limit', 200, PARAM_INT);
 if ($page < 0) {
     $page = 0;
 }
-if ($limit < 1 || $limit > local_listcoursefiles\course_files::MAX_FILES) {
-    $limit = local_listcoursefiles\course_files::MAX_FILES;
+if ($limit < 1 || $limit > course_files::MAX_FILES) {
+    $limit = course_files::MAX_FILES;
 }
-$component = optional_param('component', 'all_wo_submissions', PARAM_ALPHANUMEXT);
-$filetype = optional_param('filetype', 'all', PARAM_ALPHAEXT);
+$component = component::optional_param();
+$filetype = filetype::optional_param(); // TODO: Catch invalid filetype exception and display error notification?
 $action = optional_param('action', '', PARAM_ALPHAEXT);
-$chosenfiles = optional_param_array('file', [], PARAM_INT);
 
-$context = context_course::instance($courseid);
+$coursefiles = new course_files(
+    courseid: $courseid,
+    component: $component,
+    filetype: $filetype,
+    offset: $page * $limit,
+    limit: $limit,
+);
 $title = get_string('pluginname', 'local_listcoursefiles');
 $url = new moodle_url(
     '/local/listcoursefiles/index.php',
@@ -47,43 +62,42 @@ $url = new moodle_url(
         'page' => $page,
         'limit' => $limit,
         'component' => $component,
-        'filetype' => $filetype,
+        'filetype' => $filetype->value,
     ],
 );
-$PAGE->set_context($context);
+$PAGE->set_context($coursefiles->context);
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('incourse');
 
-
 require_login($courseid);
-require_capability('local/listcoursefiles:view', $context);
-$changelicenseallowed = has_capability('local/listcoursefiles:change_license', $context);
-$downloadallowed = has_capability('local/listcoursefiles:download', $context);
+require_capability('local/listcoursefiles:view', $coursefiles->context);
 
-$files = new local_listcoursefiles\course_files($courseid, $context, $component, $filetype);
-
-if ($action === 'change_license' && $changelicenseallowed) {
+if ($action === 'change_license') {
+    require_capability('local/listcoursefiles:change_license', $coursefiles->context);
     require_sesskey();
     $license = required_param('license', PARAM_NOTAGS);
+    $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $files->set_files_license($chosenfiles, $license);
+        $coursefiles->set_license($license, ...$chosenfiles);
     } catch (moodle_exception $e) {
-        \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
+        notification::error($e->getMessage());
     }
-} else if ($action === 'download' && $downloadallowed) {
+} else if ($action === 'download') {
+    require_capability('local/listcoursefiles:download', $coursefiles->context);
     require_sesskey();
+    $chosenfiles = array_keys(required_param_array('file', PARAM_INT));
     try {
-        $files->download_files($chosenfiles);
+        $coursefiles->download(...$chosenfiles);
     } catch (moodle_exception $e) {
-        \core\notification::add($e->getMessage(), \core\output\notification::NOTIFY_ERROR);
+        notification::error($e->getMessage());
     }
 }
 
-$filelist = $files->get_file_list($page * $limit, $limit);
+/** @var local_listcoursefiles\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_listcoursefiles');
 
 echo $OUTPUT->header();
-echo $renderer->overview_page($url, $files, $page, $limit, $filelist, $changelicenseallowed, $downloadallowed);
+echo $renderer->overview_page($url, $coursefiles, $page);
 echo $OUTPUT->footer();

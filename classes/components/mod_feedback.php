@@ -16,78 +16,48 @@
 
 namespace local_listcoursefiles\components;
 
-use local_listcoursefiles\course_file;
+use moodle_url;
 
 /**
- * Class mod_feedback
- * @package local_listcoursefiles
- * @author Jeremy FitzPatrick
+ * Represents a file uploaded in a feedback module context.
+ *
+ * @package   local_listcoursefiles
+ * @author    Jeremy FitzPatrick
  * @copyright 2022 Te Wānanga o Aotearoa
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_feedback extends course_file {
-    /**
-     * Try to get the download url for a file.
-     *
-     * @return null|\moodle_url
-     * @throws \moodle_exception
-     */
-    protected function get_file_download_url(): ?\moodle_url {
-        switch ($this->file->filearea) {
-            case 'item':
-            case 'page_after_submit':
-                return $this->get_standard_file_download_url();
-            default:
-                return parent::get_file_download_url();
-        }
+class mod_feedback extends mod {
+    #[\Override]
+    protected function get_download_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'item', 'page_after_submit' => $this->get_standard_download_url(),
+            default                     => parent::get_download_url(),
+        };
     }
 
-    /**
-     * Creates the URL for the editor where the file is added
-     *
-     * @return \moodle_url|null
-     * @throws \dml_exception
-     * @throws \moodle_exception
-     */
-    protected function get_edit_url(): ?\moodle_url {
-        global $DB;
-        switch ($this->file->filearea) {
-            case 'item':
-            case 'page_after_submit':
-                $sql = "SELECT cm.*
-                          FROM {context} ctx
-                          JOIN {course_modules} cm ON cm.id = ctx.instanceid
-                         WHERE ctx.id = ?";
-                $mod = $DB->get_record_sql($sql, [$this->file->contextid]);
-                return new \moodle_url('/course/modedit.php?', ['update' => $mod->id]);
-            default:
-                return parent::get_edit_url();
-        }
+    #[\Override]
+    protected function get_edit_url(): moodle_url|null {
+        return match ($this->filearea) {
+            'item', 'page_after_submit' => $this->get_edit_url_from_context(),
+            default                     => parent::get_edit_url(),
+        };
     }
 
-    /**
-     * Checks if embedded files have been used
-     *
-     * @return bool|null
-     * @throws \dml_exception
-     */
-    protected function is_file_used(): ?bool {
-        // File areas = intro, item, page_after_submit.
+    #[\Override]
+    protected function get_embedding_context(): string|false {
         global $DB;
-        switch ($this->file->filearea) {
-            case 'item':
-                $item = $DB->get_record('feedback_item', ['id' => $this->file->itemid]);
-                return $this->is_embedded_file_used($item, 'presentation', $this->file->filename);
-            case 'page_after_submit':
-                $sql = "SELECT m.*
-                          FROM {feedback} m
-                          JOIN {course_modules} cm ON cm.instance = m.id
-                          JOIN {context} ctx ON ctx.instanceid = cm.id
-                         WHERE ctx.id = ?";
-                $feedback = $DB->get_record_sql($sql, [$this->file->contextid]);
-                return $this->is_embedded_file_used($feedback, 'page_after_submit', $this->file->filename);
-            default:
-                return parent::is_file_used();
-        }
+        return match ($this->filearea) {
+            'item' => $DB->get_field('feedback_item', 'presentation', ['id' => $this->itemid]),
+            'page_after_submit' => $DB->get_field_sql(
+                "SELECT m.page_after_submit
+                   FROM {feedback} m
+                   JOIN {course_modules} cm ON cm.instance = m.id
+                   JOIN {context} ctx ON ctx.instanceid = cm.id
+                  WHERE ctx.id = :contextid",
+                ['contextid' => $this->contextid],
+            ),
+            // Parent implementation covers the `intro` file area.
+            default => parent::get_embedding_context(),
+        };
     }
 }
