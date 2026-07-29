@@ -51,9 +51,9 @@ jobs:
         database: [pgsql, mariadb]
         # In case more PHP/Moodle versions are added to the matrix, we may need to exclude some combinations.
         # See: https://moodledev.io/general/development/policies/php
-        #exclude:
-        #  - php: '8.3'
-        #    moodle-branch: MOODLE_403_STABLE
+        exclude:
+          - php: '8.2'
+            moodle-branch: MOODLE_502_STABLE
 
     steps:
       - name: Check out repository code
